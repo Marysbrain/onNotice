@@ -6,6 +6,7 @@ import { runCorroborate } from "../src/classify/corroborate.js";
 import { runLinks } from "../src/classify/links.js";
 import { runPublish } from "../src/publish/publish.js";
 import { StubClassifier } from "../src/classify/classifier.js";
+import { insertFccMonthly } from "../src/db/fcc.js";
 
 const DAY = 24 * 60 * 60;
 
@@ -136,14 +137,13 @@ describe("link building", () => {
 });
 
 describe("aggregates publisher", () => {
-  it("writes map/mentions/totals with the cleared-or-better filter and strict verified count", async () => {
-    // Map source rows: FCC Socrata, cleared vs queued.
-    await seed({ dedupeKey: "m1", sourceId: "fcc_socrata", locState: "NV", locZip: "89501" });
-    await seed({ dedupeKey: "m2", sourceId: "fcc_socrata", locState: "NV", locZip: "89502" });
-    await seed({ dedupeKey: "m3", sourceId: "fcc_socrata", locState: "CA", locZip: "90001" });
-    await seed({ dedupeKey: "m4", sourceId: "fcc_socrata", locState: "NV", locZip: "89999" });
-    await env.DB.exec("UPDATE records SET review_status='cleared' WHERE dedupe_key IN ('m1','m2','m3')");
-    await env.DB.exec("UPDATE records SET review_status='queued' WHERE dedupe_key='m4'");
+  it("writes map (from FCC aggregates), mentions, and totals with the strict verified count", async () => {
+    // Map now comes from the FCC monthly aggregates table, not row-level records.
+    await insertFccMonthly(env, [
+      { month: "2015-03", state: "NV", zip: null, method: null, count: 2 },
+      { month: "2015-03", state: "CA", zip: null, method: null, count: 1 },
+      { month: "2015-03", state: null, zip: "89501", method: null, count: 2 },
+    ]);
 
     // Vetting spread for totals.
     await seed({ dedupeKey: "t1", carrier: "att", allegedIssue: "x", recordDate: 1_700_000_000, vettingStatus: "corroborated" });
@@ -153,10 +153,9 @@ describe("aggregates publisher", () => {
     expect(res.totals).toBeGreaterThan(0);
 
     const mapObj = JSON.parse(await (await env.RAW.get("aggregates/map.json"))!.text());
-    const nv = mapObj.byState.find((s: { state: string }) => s.state === "NV");
-    expect(nv.count).toBe(2); // m1, m2 cleared; m4 queued excluded
+    expect(mapObj.source).toBe("fcc_monthly_aggregates");
+    expect(mapObj.byState.find((s: { state: string }) => s.state === "NV").count).toBe(2);
     expect(mapObj.byState.find((s: { state: string }) => s.state === "CA").count).toBe(1);
-    expect(mapObj.byZip.some((z: { zip: string }) => z.zip === "89999")).toBe(false);
 
     const totalsObj = JSON.parse(await (await env.RAW.get("aggregates/totals.json"))!.text());
     expect(totalsObj.verified).toBe(2); // corroborated + verified_primary only

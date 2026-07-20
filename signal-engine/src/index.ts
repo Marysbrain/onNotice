@@ -83,6 +83,16 @@ export default {
           return json({ task, result: await runPublish(env) });
         case "jobs":
           return json({ task, result: await runJobs(env) });
+        // Backfill triggers. Each enqueues the first job; the runner walks the
+        // rest via self-chaining continuations. Safe to call twice (dedupe).
+        case "arb_backfill":
+        case "ftc_backfill":
+        case "courtlistener_backfill":
+        case "fcc_aggregate_backfill":
+        case "wayback_backfill": {
+          const enqueued = await enqueueJob(env, task, `${task}:kickoff`);
+          return json({ task, result: { enqueued } });
+        }
         default:
           return json(
             {
@@ -90,6 +100,7 @@ export default {
               valid: [
                 "ftc", "arb", "terms", "caag", "edgar", "socrata", "ecfs", "news",
                 "bsky", "hn", "purge", "classify", "corroborate", "link", "publish", "jobs",
+                "arb_backfill", "ftc_backfill", "courtlistener_backfill", "fcc_aggregate_backfill", "wayback_backfill",
               ],
             },
             400

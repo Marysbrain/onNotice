@@ -121,14 +121,86 @@ re-runs idempotent.
 ### Aggregates publisher
 
 The `publish` job writes pre-aggregated JSON to R2 for Track E, deterministic
-names, overwritten each run:
+names, overwritten each run. Core files every run, drill-down files spread across
+runs by cursor:
 
-- `aggregates/map.json`: counts by state and by zip, from location-bearing sources (FCC Socrata and story submissions), only rows `cleared` or better.
+- `aggregates/map.json`: counts by state and by zip, built from the FCC monthly aggregates table (complaint concentration by place, not per-carrier).
 - `aggregates/mentions.json`: the monthly carrier mentions view.
 - `aggregates/totals.json`: totals, including a strict verified count that is `corroborated` plus `verified_primary` only.
+- `aggregates/hotspots.json`: ranked hot spots for the map flames (see below).
+- `aggregates/links.json`: the thread graph, nodes are record ids, edges carry `link_type` and `basis`, only displayable records.
+- `aggregates/states/{XX}.json`: per-state drill-down (monthly trend, top issues, records list). A few states per run, walked by cursor.
+- `aggregates/records/{id}.json`: per-record citation block. A few per run, walked by cursor.
 
-These are what the public site reads, so they carry counts and locations only.
-No excerpts, no author data, nothing from a social record body.
+Privacy: the per-state records list, per-record files, and the link graph expose
+only records that are `cleared` AND `corroborated`-or-better. Excerpts are never
+included. A Bluesky `source_url` is converted to its derived permalink so no raw
+AT-URI is published. The public site reads these files, so they carry counts,
+locations, and citation fields only, never social post text or author data.
+
+## Historical backfill
+
+Everything here is additive and ships idle. Nothing runs until you trigger it,
+and the collectors added earlier keep working unchanged. Each backfill job does
+one small bounded batch and re-enqueues a continuation while work remains, so the
+`*/5` runner walks the history in chunks that fit the free CPU and 50-query
+budgets.
+
+- `arb_backfill`: one-shot. Forces a fresh AAA and JAMS download and parse regardless of cursor. The quarterly files carry about five years of history by law, so one full parse is the backfill. The xlsx parse still goes through the GitHub Actions escape hatch.
+- `ftc_backfill`: pages backward through the FTC press-release listing, one page per run, stops at a configurable earliest date (`FTC_BACKFILL_EARLIEST`, default 2015-01-01). Dates are read from the press-release URL path, which is robust. Filters to telecom and wireless matters. Records get `record_date` from the item date.
+- `courtlistener_backfill`: CourtListener v4 search within the free rate. A per-day budget counter in KV (`COURTLISTENER_DAILY`, default 125) is spent before each call; the walker stops when the day is exhausted and resumes tomorrow from the cursor. Stores docket-level records: court, case name, date filed, docket number, source URL. Optional `COURTLISTENER_TOKEN` raises limits.
+- `fcc_aggregate_backfill`: THE architecture decision. We do not store row-level FCC complaints. Socrata group-by queries pull monthly counts by state and by top zips for `issue_type=Phone`, walking month cursors from 2014-11 forward into `fcc_monthly_aggregates`. The month grouping uses `date_trunc_ym(ticket_created)`, a documented SoQL function (verified at https://dev.socrata.com/docs/functions/date_trunc_ym.html, captured 2026-07-20). The publisher map layer reads this table.
+- `wayback_backfill`: for each real terms target, queries the Wayback CDX API (matchType=prefix, collapse=digest, from=2019), stores one `terms_snapshots` row per distinct capture, and diffs consecutive captures the way live snapshots do. Terms targets are still placeholders, so this is a no-op until real URLs are seeded. Backfill snapshot rows carry an `archive_url` and a `wayback:<timestamp>` sentinel `r2_key` (the deployed column is NOT NULL; the sentinel means no local R2 object, archived remotely).
+
+### Hot spots
+
+`aggregates/hotspots.json` ranks states by complaint concentration from
+`fcc_monthly_aggregates` boosted by vetted-record density, top N with an
+intensity score (normalized to the hottest state) and a plain-text basis. The
+map's flames read this file instead of computing client-side.
+
+### Backfill runbook (paste in your terminal)
+
+Backfills are off until triggered. Enable the source rows you need first, then
+kick a backfill. Replace `$ADMIN_TOKEN` with the secret you set. The deployed
+host is `signal-engine.carriersonnotice.workers.dev`.
+
+```sh
+# Enable the backfill sources you want (courtlistener and fcc_aggregate; ftc_backfill).
+npx wrangler d1 execute signal_engine --remote \
+  --command "UPDATE sources SET enabled=1 WHERE id IN ('ftc_backfill','courtlistener','fcc_aggregate')"
+
+# Optional config before starting (all have code defaults):
+npx wrangler kv key put --binding CONFIG "config:FTC_BACKFILL_EARLIEST" "2015-01-01"
+npx wrangler kv key put --binding CONFIG "config:FCC_AGG_EARLIEST" "2014-11"
+npx wrangler kv key put --binding CONFIG "config:COURTLISTENER_DAILY" "125"
+
+# Trigger each backfill (enqueues the first job; the runner walks the rest):
+H="https://signal-engine.carriersonnotice.workers.dev"
+curl -H "authorization: Bearer $ADMIN_TOKEN" "$H/run?task=arb_backfill"
+curl -H "authorization: Bearer $ADMIN_TOKEN" "$H/run?task=ftc_backfill"
+curl -H "authorization: Bearer $ADMIN_TOKEN" "$H/run?task=courtlistener_backfill"
+curl -H "authorization: Bearer $ADMIN_TOKEN" "$H/run?task=fcc_aggregate_backfill"
+# wayback_backfill is a no-op until real terms URLs are seeded in the sources table.
+```
+
+To reset a backfill and re-run it, clear its cursor and re-trigger:
+
+```sh
+npx wrangler kv key delete --binding CONFIG "cursor:fcc_agg_month"
+npx wrangler kv key delete --binding CONFIG "cursor:ftc_backfill_page"
+npx wrangler kv key delete --binding CONFIG "cursor:courtlistener"
+```
+
+### GitHub Actions escape hatch
+
+The arbitration xlsx parse already runs in Actions (`.github/workflows/parse-arb.yml`).
+The FTC and CDX walkers are light enough to run inside the Worker, so no new
+Actions workflow was added. If a real FTC listing page or a very long CDX history
+turns out to exceed the Worker CPU budget in practice, the same escape-hatch
+pattern (a `scripts/*.mjs` walker plus a `workflow_dispatch` job that writes back
+to D1 over the HTTP API) is the fallback. OPEN ITEM for Michael: Actions requires
+the public GitHub repo to exist; it does not yet.
 
 ## Why the CPU limit drives the design
 
@@ -194,6 +266,7 @@ Worker secrets, set with `wrangler secret put`. None are in code.
 Phase 3 social listeners (Bluesky, Hacker News) are keyless public reads and need no secrets.
 
 - `ANTHROPIC_API_KEY`. Optional, Track C. Only needed if you switch the classifier to the Haiku path (`CLASSIFIER=haiku` plus `CF_ACCOUNT_ID` and `AI_GATEWAY_ID` in config). COST FLAG: Haiku bills per token. The default classifier is Workers AI and needs no key.
+- `COURTLISTENER_TOKEN`. Optional. Raises CourtListener rate limits. The backfill works without it, inside the free 125/day budget.
 
 GitHub Actions secrets for the xlsx escape hatch (repo settings, not wrangler):
 
@@ -236,6 +309,8 @@ curl -H "authorization: Bearer $ADMIN_TOKEN" \
   "https://signal-engine.<subdomain>.workers.dev/run?task=ftc"
 # task = ftc | arb | terms | caag | edgar | socrata | ecfs | news | bsky | hn
 #      | purge | classify | corroborate | link | publish | jobs
+#      | arb_backfill | ftc_backfill | courtlistener_backfill
+#      | fcc_aggregate_backfill | wayback_backfill
 ```
 
 `GET /health` returns service status with no auth.
@@ -321,6 +396,8 @@ Nothing in this repo spends money. These are the lines not to cross without a de
 - Deletion honoring is real deletion: purge sweeps hard-delete records whose source post no longer resolves, every stored social record re-checked at least weekly. The `v_carrier_mentions_monthly` aggregate therefore counts only posts that still exist.
 - Confidence is not vetting. The classifier writes `confidence` and routes on it, but never changes `vetting_status`. Only corroboration (machine) or a human upgrades vetting. `verified_primary` is human-only.
 - Published aggregates carry counts and locations only. No excerpts, no author data, nothing from a social record body reaches R2 or the public site.
+- FCC complaint data is stored as monthly aggregates only, never row-level. There is no carrier field in that data, so it is complaint concentration by place, never per-carrier.
+- The rabbit-hole drill-down files (per-state, per-record, link graph) expose only cleared, corroborated-or-better records, never excerpts, and convert Bluesky AT-URIs to derived permalinks.
 
 ## Tests
 
@@ -344,8 +421,15 @@ window rule, link-type derivation, and D1-backed tests for confidence routing at
 and below the bar (with vetting left untouched), corroboration (two sources
 upgrade, same source twice does not, never verified_primary), link building (each
 type, basis text, unique constraint), and the publisher output shape with the
-cleared-or-better filter and strict verified count (Track C). As of 2026-07-20 all
-70 tests pass on this machine (`vitest 4.1.10`, pool `0.18.6`, node 22).
+cleared-or-better filter and strict verified count (Track C); plus the FCC SoQL
+query construction, month cursor walking, the CourtListener query builder and
+docket parse, the FTC listing parse (date from URL), the Wayback CDX parse and
+snapshot-diff chaining, hotspot ranking, and D1-backed tests for the daily budget
+counter stop/resume, the CourtListener budget stop and docket insert, the map
+built from FCC aggregates, and the per-state and per-record JSON plus link graph
+with the privacy filter asserted (no social excerpts, permalink conversion,
+displayable-only) (backfill and rabbit-hole layer). As of 2026-07-20 all 87 tests
+pass on this machine (`vitest 4.1.10`, pool `0.18.6`, node 22).
 
 Test bindings are declared inline in `vitest.config.ts` (D1, R2, KV) rather than
 loaded from `wrangler.jsonc`, so the suite runs fully local. The production AI
@@ -359,17 +443,20 @@ migrations/0001_init.sql     schema + seeded sources registry
 migrations/0002_phase2_sources.sql  phase 2 source rows (API sources off by default)
 migrations/0003_phase3_social.sql   social sources, last_checked_at, aggregate view
 migrations/0004_track_c_links.sql   links table (record-to-record connections)
+migrations/0005_backfill.sql        fcc_monthly_aggregates, backfill sources
 src/index.ts                 scheduled + fetch entry, hourly dispatcher
-src/runner.ts                claim a batch, dispatch to processors
+src/runner.ts                claim a batch, dispatch to processors and backfills
 src/db/jobs.ts               enqueue, claim, complete, retry/dead-letter
 src/db/records.ts            record insert, sources read
 src/db/social.ts             purge queue: due-for-recheck, bulk purge, mark-checked
 src/db/aggregates.ts         v_carrier_mentions_monthly reader
+src/db/fcc.ts                fcc_monthly_aggregates insert and readers
 src/lib/rss.ts               regex feed reader
 src/lib/diff.ts              normalize + bounded unified diff
 src/lib/hash.ts              sha-256
 src/lib/http.ts              fetch with 429 Retry-After, injectable for tests
-src/lib/config.ts            KV-backed config and cursors, code defaults
+src/lib/config.ts            KV-backed config, cursors, daily budget counter
+src/lib/months.ts            month cursor helpers
 src/lib/wayback.ts           Save Page Now, skips if unset
 src/lib/taxonomy.ts          loads taxonomy.json, carrier/issue/promo matchers
 src/collectors/ftc-rss.ts    FTC feed poller
@@ -389,7 +476,12 @@ src/classify/classifier.ts   Classifier interface, Workers AI + Haiku + stub
 src/classify/run.ts          classify job: deterministic + AI, confidence routing
 src/classify/corroborate.ts  vetting upgrade when independent sources agree
 src/classify/links.ts        record-to-record link builder
-src/publish/publish.ts       aggregates to R2 (map, mentions, totals)
+src/publish/publish.ts       aggregates + rabbit-hole files to R2
+src/publish/hotspots.ts      hot spot ranking for the map flames
+src/backfill/ftc-backfill.ts         FTC press-release history walker
+src/backfill/courtlistener-backfill.ts CourtListener v4 search, budget-aware
+src/backfill/fcc-aggregate-backfill.ts FCC monthly aggregates via Socrata group-by
+src/backfill/wayback-backfill.ts     Wayback CDX capture history + diffs
 src/processors/parse-file.ts CSV inline, xlsx deferred
 scripts/parse-xlsx.mjs       CI escape hatch for xlsx
 taxonomy.json                keyword taxonomy as data
