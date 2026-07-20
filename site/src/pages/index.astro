@@ -1,0 +1,124 @@
+---
+import Base from "../layouts/Base.astro";
+import { buildChoropleth, fillFor, WIDTH, HEIGHT } from "../lib/geo";
+import totals from "../../public/aggregates/totals.json";
+
+const model = buildChoropleth();
+const verified = totals.verified;
+---
+
+<Base title="Carriers On Notice">
+  <div class="wrap">
+    <div class="notice">
+      <p>
+        <span class="sample-badge">SAMPLE</span> The data shown across this site
+        is sample data until launch. Numbers are modest placeholders, not real
+        counts. Real numbers will replace them at launch, with methodology
+        public.
+      </p>
+    </div>
+
+    <h1>Carriers On Notice</h1>
+
+    <p class="count-pill" style="font-size:1.1rem;">
+      <strong>{verified.toLocaleString("en-US")}</strong>&nbsp;verified records
+      <span class="sample-badge">SAMPLE</span>
+    </p>
+
+    <div class="prose">
+      <p>
+        This is a public record of how US wireless carriers run device
+        promotions, and what customers say happens next. Here is the line we
+        hold. Documented facts come from public sources, and each one links to
+        that source. Where we offer a read on what those facts add up to, we
+        label it as commentary. We never blur the two.
+      </p>
+      <p>
+        Documented fact, for example: federal regulators have taken public
+        enforcement actions against wireless carriers over billing practices,
+        and those actions are on the public record. Commentary, clearly labeled
+        as our read: a pattern of promotion terms that change after signup is
+        worth watching closely. The facts are sourced. The read is ours, and we
+        say so.
+      </p>
+    </div>
+
+    <h2>Start here</h2>
+    <ul class="card-grid">
+      <li class="card">
+        <h3>Evidence library</h3>
+        <p>Sourced records, each with a citation block you can copy.</p>
+        <a class="btn" href="/library">Open the library</a>
+      </li>
+      <li class="card">
+        <h3>Take action</h3>
+        <p>Plain steps to file with the FCC or your state attorney general.</p>
+        <a class="btn" href="/take-action">See how</a>
+      </li>
+      <li class="card">
+        <h3>Tell your story</h3>
+        <p>Share what happened in your own words. You choose to send it.</p>
+        <a class="btn" href="/tell">Tell your story</a>
+      </li>
+    </ul>
+
+    <h2>The map</h2>
+    <p class="prose">
+      Wireless billing complaint concentration by state, all carriers, from the
+      FCC layer. This preview does not move. The full map, with filters, hot
+      spots, and drill down, is one click away. <span class="sample-badge"
+        >SAMPLE</span
+      >
+    </p>
+
+    <a
+      href="/map"
+      class="map-preview-link"
+      aria-label="Open the interactive map. Preview shows a static choropleth of complaint concentration."
+    >
+      <svg
+        class="us-map-preview"
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        role="img"
+        aria-label="Static preview of the US complaint concentration map. Sample data. Open the map page for the full data table and interactive version."
+      >
+        {
+          model.states.map((s) => (
+            <path
+              d={s.path}
+              fill={fillFor(s.bin)}
+              stroke="var(--border)"
+              stroke-width="0.75"
+            />
+          ))
+        }
+      </svg>
+    </a>
+    <p><a class="btn" href="/map">Open the interactive map</a></p>
+
+    <h2>How the numbers work</h2>
+    <p class="prose">
+      Every public number links to how it is counted. Only corroborated and
+      verified primary records feed the public counts. The FCC complaint layer
+      has no carrier name field, so it is never shown per carrier. Read the
+      <a href="/methodology">methodology</a> for the full rules, and the
+      <a href="/corrections">corrections page</a> for anything we have fixed.
+    </p>
+  </div>
+
+  <style>
+    .map-preview-link {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      padding: 0.5rem;
+      overflow-x: auto;
+    }
+    .us-map-preview {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</Base>

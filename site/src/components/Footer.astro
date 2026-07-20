@@ -1,0 +1,39 @@
+---
+// Footer. Corrections and methodology links required in every footer, plus all
+// six track-i legal docs. Corrections page ships from day one.
+const links = [
+  { href: "/methodology", label: "Methodology" },
+  { href: "/corrections", label: "Corrections" },
+  { href: "/legal/terms-of-use", label: "Terms of Use" },
+  { href: "/legal/privacy-policy", label: "Privacy Policy" },
+  { href: "/legal/submission-consent", label: "Submission Consent" },
+  { href: "/legal/moderation-standards", label: "Moderation Standards" },
+  { href: "/legal/corrections-policy", label: "Corrections Policy" },
+  { href: "/legal/action-hub-disclaimer", label: "Action Hub Disclaimer" },
+];
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <ul class="footer-links">
+        {
+          links.map((l) => (
+            <li>
+              <a href={l.href}>{l.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <p>
+      Carriers On Notice is a public evidence project. Every public number links
+      to how it is counted. Every data point links to its source. If we get
+      something wrong, we fix it in the open on the corrections page.
+    </p>
+    <p>
+      Location is shown at city, state, or ZIP level only. We never display
+      usernames or personal identifiers. We aggregate, we do not profile.
+    </p>
+  </div>
+</footer>

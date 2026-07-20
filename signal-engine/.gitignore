@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.dev.vars.*
+*.log
+.DS_Store
+coverage/
+# Never commit secrets or local state.
+.env
+.env.*
+wrangler.local.jsonc

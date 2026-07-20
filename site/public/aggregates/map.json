@@ -1,0 +1,36 @@
+{
+  "generated_at": 1753000000,
+  "byState": [
+    { "state": "CA", "count": 48 },
+    { "state": "TX", "count": 41 },
+    { "state": "FL", "count": 37 },
+    { "state": "NY", "count": 29 },
+    { "state": "GA", "count": 22 },
+    { "state": "PA", "count": 19 },
+    { "state": "IL", "count": 18 },
+    { "state": "OH", "count": 16 },
+    { "state": "NC", "count": 15 },
+    { "state": "NJ", "count": 13 },
+    { "state": "WA", "count": 12 },
+    { "state": "AZ", "count": 11 },
+    { "state": "MI", "count": 10 },
+    { "state": "VA", "count": 9 },
+    { "state": "MA", "count": 8 },
+    { "state": "TN", "count": 7 },
+    { "state": "CO", "count": 6 },
+    { "state": "MD", "count": 5 },
+    { "state": "OR", "count": 4 },
+    { "state": "NV", "count": 3 },
+    { "state": "NM", "count": 2 },
+    { "state": "ME", "count": 1 }
+  ],
+  "byZip": [
+    { "zip": "90011", "count": 6 },
+    { "zip": "77004", "count": 5 },
+    { "zip": "33101", "count": 5 },
+    { "zip": "10029", "count": 4 },
+    { "zip": "30303", "count": 3 },
+    { "zip": "19104", "count": 2 },
+    { "zip": "98101", "count": 2 }
+  ]
+}

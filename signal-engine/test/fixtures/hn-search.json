@@ -1,0 +1,17 @@
+{
+  "hits": [
+    {
+      "objectID": "40123456",
+      "title": "T-Mobile drops promotional credit for existing customers",
+      "author": "hnuser_secret_handle",
+      "created_at_i": 1714560000,
+      "url": "https://example.com/story"
+    },
+    {
+      "objectID": "40123457",
+      "comment_text": "I had my &lt;b&gt;bill credits&lt;/b&gt; clawed back by Verizon after a year",
+      "author": "another_secret_user",
+      "created_at_i": 1714646400
+    }
+  ]
+}

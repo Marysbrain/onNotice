@@ -1,0 +1,101 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Methodology"
+  description="Where every number comes from, the vetting ladder, the FCC no carrier name limit, and how social mentions are counted."
+>
+  <div class="wrap prose" data-pagefind-body>
+    <h1>Methodology</h1>
+    <p>
+      This page explains where every number on the site comes from and how it is
+      counted. A link to this page sits near every number.
+    </p>
+
+    <h2>Where the numbers come from</h2>
+    <p>
+      Public counts are built from records in the evidence tier. That tier
+      includes arbitration files that name the company, court filings, federal
+      enforcement actions, SEC filings, the FCC complaint dataset, and vetted
+      stories people send us. Each record links to its public source. We publish
+      pre aggregated counts, so the public files carry counts and locations
+      only, never a story body or any personal identifier.
+    </p>
+
+    <h2>The vetting ladder</h2>
+    <p>
+      Every record sits on one of three rungs.
+    </p>
+    <ul>
+      <li>
+        <strong>Single source.</strong> One source says it and nothing else
+        corroborates it yet. This is a lead. It does not feed the public count.
+      </li>
+      <li>
+        <strong>Corroborated.</strong> More than one independent source supports
+        it, or a primary document backs a secondary report.
+      </li>
+      <li>
+        <strong>Verified primary.</strong> A primary public document establishes
+        it directly, for example an agency action or a filed court document.
+      </li>
+    </ul>
+    <p>
+      Only the top two rungs, corroborated and verified primary, feed the public
+      counts. The running verified count in the header is the strict count:
+      corroborated plus verified primary only.
+    </p>
+
+    <h2>The FCC complaint limit, in plain words</h2>
+    <p>
+      The FCC informal complaint dataset gives us complaint volume by city,
+      state, and ZIP. It does not include the name of the company complained
+      about. There is no carrier name field in that data.
+    </p>
+    <p>
+      So the map color layer built from it shows wireless billing complaint
+      concentration for all carriers. We never present it as per carrier counts,
+      because the data cannot support that. Per carrier numbers come only from
+      sources where the company is named on the record, like arbitration files,
+      court filings, and vetted stories.
+    </p>
+
+    <h2>Counting social mentions</h2>
+    <p>
+      From public platforms that allow it, we publish aggregate mention counts
+      per carrier per month. We publish the count and the method, never an
+      individual post. A single social post is a lead until it is vetted, not a
+      public data point.
+    </p>
+    <p>
+      <strong>Deletion is honored.</strong> When a post is deleted at the
+      source, it stops counting. Our counts reflect what still exists. We
+      consume real delete events and drop removed posts, so an aggregate count
+      never props up something the author took down.
+    </p>
+
+    <h2>What the public files contain</h2>
+    <p>
+      The site reads three published files. A map file with counts by state and
+      by ZIP. A mentions file with monthly carrier mention counts by source. A
+      totals file with the record total, the strict verified count, and the
+      breakdown by vetting rung. These files carry numbers and locations only.
+    </p>
+
+    <h2>The line between fact and commentary</h2>
+    <p>
+      Documented practice is stated as fact, with a source. Any characterization
+      of what the facts add up to is labeled as commentary. We never assert that
+      carriers coordinate. We aim at practices and companies, never at
+      individual employees. Real numbers only. We never inflate.
+    </p>
+
+    <h2>Corrections</h2>
+    <p>
+      When we get a number or a claim wrong, we fix it in the open. See the
+      <a href="/corrections">corrections page</a> and the
+      <a href="/legal/corrections-policy">corrections policy</a>.
+    </p>
+  </div>
+</Base>

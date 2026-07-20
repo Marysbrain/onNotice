@@ -1,0 +1,18 @@
+{
+  "filings": [
+    {
+      "id_submission": "10520123456",
+      "date_received": "2024-05-01",
+      "filers": [{ "name": "National Consumer Law Center" }],
+      "proceedings": [{ "name": "CG Docket No. 02-278" }],
+      "text_data": "Comments on bill credits and trade-in credit clawback practices by carriers."
+    },
+    {
+      "id_submission": "10520987654",
+      "date_received": "2024-04-15",
+      "filers": [{ "name": "Jane Q. Public" }],
+      "proceedings": [{ "name": "CG Docket No. 02-278" }],
+      "text_data": "I lost my promotional credit after three months and want to complain."
+    }
+  ]
+}

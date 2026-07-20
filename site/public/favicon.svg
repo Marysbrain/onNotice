@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Carriers On Notice">
+  <rect width="64" height="64" rx="12" fill="#b4410f" />
+  <path d="M32 12c4 8-2 10-2 16 0 4 3 7 3 11 0 3-2 5-5 5-5 0-9-4-9-10 0-9 8-13 8-22 0 0 4 0 5 0z" fill="#ffd8a8" />
+  <circle cx="40" cy="42" r="7" fill="#ffe8cc" />
+</svg>

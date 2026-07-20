@@ -1,0 +1,62 @@
+{
+	// Carriers On Notice signal engine. One Worker, cron-driven.
+	// Deploys to the Carriers On Notice account (4c85c4ec12e96e4c06c87e04714bba4d)
+	// using the token in ~/.con-cloudflare.env. Never the gateway account.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "signal-engine",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-07-01",
+	// nodejs_compat gives us the standard-ish globals some parsers want. No paid feature.
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	// Cron triggers. Free plan allows 5 per account. We use 2 and branch inside
+	// the scheduled handler, which leaves 3 spare for later phases.
+	//   */5 * * * *  -> run the job queue (claim + process a small batch)
+	//   0 * * * *    -> hourly dispatcher. Kicks collectors by hour of day.
+	"triggers": {
+		"crons": [
+			"*/5 * * * *",
+			"0 * * * *"
+		]
+	},
+	"observability": {
+		// Free. Keeps logs available without Logpush (Logpush is paid).
+		"enabled": true
+	},
+	// D1: records, jobs, terms snapshots + diffs, sources registry.
+	// database_id is blank until `wrangler d1 create signal_engine` fills it.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "signal_engine",
+			"database_id": "5d06e4be-c718-4b5a-a242-aaefa23e14c7",
+			"migrations_dir": "migrations"
+		}
+	],
+	// R2: raw archives. Downloaded arbitration files, page snapshots, terms HTML.
+	"r2_buckets": [
+		{
+			"binding": "RAW",
+			"bucket_name": "signal-engine-raw"
+		}
+	],
+	// KV: config and small cache (dispatcher cursors, last-seen markers).
+	"kv_namespaces": [
+		{
+			"binding": "CONFIG",
+			"id": "07bee3696c684045aff9b04bfc5cea6e"
+		}
+	],
+	// Workers AI: the default classifier (Track C). Free tier is 10,000 Neurons
+	// per day (see README). No account-level cost until that is exceeded.
+	"ai": {
+		"binding": "AI"
+	},
+	"vars": {
+		// Non-secret config. Secrets go through `wrangler secret put` (see README).
+		// A shared secret to guard the manual /run trigger endpoint. Overridden by
+		// a real secret in production via `wrangler secret put ADMIN_TOKEN`.
+		"ENVIRONMENT": "development"
+	}
+}

@@ -1,0 +1,59 @@
+---
+import Base from "../../layouts/Base.astro";
+import { records, carrierLabel } from "../../data/records";
+
+const sorted = [...records].sort((a, b) =>
+  b.eventDate.localeCompare(a.eventDate)
+);
+---
+
+<Base
+  title="Evidence library"
+  description="Sourced records on wireless carrier device promotions, each with a copyable citation block. Sample records until launch."
+>
+  <div class="wrap">
+    <h1>Evidence library</h1>
+    <div class="notice">
+      <p>
+        <span class="sample-badge">SAMPLE</span> These are sample records. They
+        show the record format and the citation block. The sources and source
+        links are real public documents. The facts shown are accurate at the
+        level stated and trace to the linked source.
+      </p>
+    </div>
+
+    <p class="prose">
+      Every record traces to a public source. Every record carries a citation
+      block you can copy. Records are rated on a vetting ladder: single source,
+      corroborated, verified primary. Only corroborated and verified primary
+      records feed the public counts. See the
+      <a href="/methodology">methodology</a>.
+    </p>
+
+    <p class="prose">
+      Use the search box in your browser, or the site search, to find a cited
+      claim fast.
+    </p>
+
+    <ul class="card-grid">
+      {
+        sorted.map((r) => (
+          <li class="card" data-pagefind-body>
+            <h3>
+              <a href={`/library/${r.slug}`}>{r.title}</a>
+            </h3>
+            <p>
+              <span class="sample-badge">SAMPLE</span>{" "}
+              {r.claimType} | {carrierLabel(r.carrier)} |{" "}
+              {r.vetting.replace("_", " ")}
+            </p>
+            <p>{r.claim}</p>
+            <p class="hint">
+              Source: {r.sourceName}. Captured {r.captureDate}.
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>

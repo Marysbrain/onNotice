@@ -1,0 +1,494 @@
+/*
+  Carriers On Notice. Global styles.
+  Typography is built for dyslexic readers per the michael-voice rule:
+  sans-serif, larger base size, generous line height and letter spacing,
+  left aligned, never justified, short line lengths.
+  No em dashes anywhere in this file or any file in this repo.
+*/
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+
+  --measure: 62ch; /* short line length for readability */
+
+  /* Light theme */
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-soft: #444444;
+  --border: #d6d6cf;
+  --link: #14507a;
+  --link-visited: #5a3a86;
+  --accent: #b4410f; /* flame / action, warm, not red-green dependent */
+  --focus: #0a5ad6;
+  --sample-bg: #fff3cd;
+  --sample-text: #6b4e00;
+  --sample-border: #d9b545;
+
+  /* Colorblind safe sequential scale (ColorBrewer YlGnBu, 5 class).
+     Meaning is never encoded in color alone. Values are always shown. */
+  --seq-0: #edf8fb;
+  --seq-1: #b3cde3;
+  --seq-2: #8c96c6;
+  --seq-3: #8856a7;
+  --seq-4: #810f7c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --surface: #1f2125;
+    --text: #f2f2ef;
+    --text-soft: #c4c4bd;
+    --border: #3a3d43;
+    --link: #7fb6e0;
+    --link-visited: #c0a3ea;
+    --accent: #ff8a5c;
+    --focus: #7fb6e0;
+    --sample-bg: #3a3010;
+    --sample-text: #ffe08a;
+    --sample-border: #a5872f;
+    --seq-0: #12303b;
+    --seq-1: #245a6e;
+    --seq-2: #3f7ba0;
+    --seq-3: #7b5ea8;
+    --seq-4: #b26fc0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #16171a;
+  --surface: #1f2125;
+  --text: #f2f2ef;
+  --text-soft: #c4c4bd;
+  --border: #3a3d43;
+  --link: #7fb6e0;
+  --link-visited: #c0a3ea;
+  --accent: #ff8a5c;
+  --focus: #7fb6e0;
+  --sample-bg: #3a3010;
+  --sample-text: #ffe08a;
+  --sample-border: #a5872f;
+  --seq-0: #12303b;
+  --seq-1: #245a6e;
+  --seq-2: #3f7ba0;
+  --seq-3: #7b5ea8;
+  --seq-4: #b26fc0;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-soft: #444444;
+  --border: #d6d6cf;
+  --link: #14507a;
+  --link-visited: #5a3a86;
+  --accent: #b4410f;
+  --focus: #0a5ad6;
+  --sample-bg: #fff3cd;
+  --sample-text: #6b4e00;
+  --sample-border: #d9b545;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  display: block;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.prose {
+  max-width: var(--measure);
+}
+
+.prose p,
+.prose li {
+  line-height: 1.75;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 1.9rem;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.4rem;
+  margin: 2rem 0 0.5rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  margin: 1.5rem 0 0.4rem;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 2px;
+}
+
+a:visited {
+  color: var(--link-visited);
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Visible focus rings everywhere. WCAG 2.2 AA intent. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--focus);
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+/* Header */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.site-header .bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.9rem 0;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-left: auto;
+  font-size: 0.98rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.92rem;
+  background: var(--bg);
+}
+
+.count-pill strong {
+  font-size: 1.05rem;
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  margin-top: 3rem;
+  padding: 1.75rem 0;
+  font-size: 0.95rem;
+  color: var(--text-soft);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+/* Sample badge. Used wherever sample data displays. */
+.sample-badge {
+  display: inline-block;
+  background: var(--sample-bg);
+  color: var(--sample-text);
+  border: 1px solid var(--sample-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.4rem;
+  vertical-align: middle;
+}
+
+.notice {
+  border: 1px solid var(--sample-border);
+  background: var(--sample-bg);
+  color: var(--sample-text);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin: 1.25rem 0;
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
+}
+
+/* Cards and grids */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 1.1rem;
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn:visited {
+  color: #ffffff;
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--link);
+  border: 1px solid var(--border);
+}
+
+/* Citation block */
+.citation {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  margin: 1.25rem 0;
+}
+
+.citation dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+}
+
+.citation dt {
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.citation dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cite-string {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Copy paste block (distribution kit) */
+.copy-block {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  padding: 0.9rem 1rem;
+  margin: 1.25rem 0;
+}
+
+.copy-block p {
+  margin: 0 0 0.6rem;
+}
+
+.copy-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.copy-status {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.98rem;
+}
+
+.data-table caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.data-table th {
+  background: var(--bg);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Forms */
+.field {
+  margin: 1rem 0;
+}
+
+.field label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  max-width: var(--measure);
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.field textarea {
+  min-height: 8rem;
+  line-height: 1.6;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  margin-top: 0.25rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.legend .swatch {
+  display: inline-block;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  margin-right: 0.3rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

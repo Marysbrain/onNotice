@@ -1,0 +1,36 @@
+# Escape hatch for xlsx parsing. The Worker cannot parse xlsx inside the free
+# 10ms CPU budget, so it downloads the file to R2 and defers. This workflow runs
+# the heavy parse in CI (free) and writes carrier rows back to D1 over the HTTP
+# query API.
+#
+# Trigger by hand from the Actions tab. Inputs are the file URL the Worker
+# resolved and the provider. Later this can be driven from a small queue.
+name: parse-arb-file
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_url:
+        description: "AAA/JAMS xlsx URL (or a raw.githubusercontent path)"
+        required: true
+      provider:
+        description: "aaa or jams"
+        required: true
+        default: "aaa"
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm i exceljs
+        working-directory: signal-engine
+      - run: node scripts/parse-xlsx.mjs "${{ inputs.file_url }}" "${{ inputs.provider }}"
+        working-directory: signal-engine
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}

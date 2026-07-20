@@ -1,0 +1,60 @@
+---
+import Base from "../../layouts/Base.astro";
+import CitationBlock from "../../components/CitationBlock.astro";
+import CopyBlock from "../../components/CopyBlock.astro";
+import { records, carrierLabel } from "../../data/records";
+import type { EvidenceRecord } from "../../data/records";
+
+export function getStaticPaths() {
+  return records.map((r) => ({
+    params: { slug: r.slug },
+    props: { record: r },
+  }));
+}
+
+interface Props {
+  record: EvidenceRecord;
+}
+const { record } = Astro.props;
+const pageUrl = `https://carriersonnotice.com/library/${record.slug}`;
+const shareFact = `${record.claim} Source: ${record.sourceName}.`;
+---
+
+<Base title={record.title} description={record.claim}>
+  <div class="wrap" data-pagefind-body>
+    <p class="hint"><a href="/library">Back to the library</a></p>
+    <h1>{record.title} <span class="sample-badge">SAMPLE</span></h1>
+
+    <p class="prose">
+      <strong>Claim type:</strong>
+      {record.claimType} &nbsp; <strong>Carrier:</strong>
+      {carrierLabel(record.carrier)} &nbsp; <strong>Vetting:</strong>
+      {record.vetting.replace("_", " ")} &nbsp; <strong>Event date:</strong>
+      {record.eventDate}
+    </p>
+
+    <p class="prose">{record.claim}</p>
+
+    {
+      record.vetting === "single_source" && (
+        <div class="notice">
+          <p>
+            This record is single source. It does not feed the public verified
+            count. A filed complaint is an allegation, not a finding.
+          </p>
+        </div>
+      )
+    }
+
+    <CitationBlock record={record} />
+
+    <h2>Share this record</h2>
+    <CopyBlock id={`share-${record.slug}`} text={shareFact} link={pageUrl} />
+
+    <p class="prose hint">
+      Documented facts on this page trace to the linked source. Any read on what
+      they mean would be labeled commentary. This record states the sourced
+      fact only.
+    </p>
+  </div>
+</Base>

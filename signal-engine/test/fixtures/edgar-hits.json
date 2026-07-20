@@ -1,0 +1,16 @@
+{
+  "hits": {
+    "total": { "value": 1 },
+    "hits": [
+      {
+        "_id": "0000732717-24-000045:att10q.htm",
+        "_source": {
+          "ciks": ["0000732717"],
+          "display_names": ["AT&T INC. (T) (CIK 0000732717)"],
+          "file_date": "2024-05-01",
+          "form": "10-Q"
+        }
+      }
+    ]
+  }
+}

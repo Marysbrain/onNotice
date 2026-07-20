@@ -1,0 +1,39 @@
+---
+// Distribution kit copy paste block. Two or three plain sentences stating a
+// sourced fact plus the page link. One tap to copy. The kit spreads the link,
+// never a pre written complaint. Facebook groups and Discord are paste
+// cultures, so this is a paste, not a script to flood.
+interface Props {
+  text: string; // the factual sentences, source included
+  link: string; // absolute page link
+  id?: string;
+}
+const { text, link, id = "copyblock" } = Astro.props;
+const full = `${text} ${link}`;
+const statusId = `${id}-status`;
+---
+
+<div class="copy-block">
+  <p class="visually-hidden">Copy and paste block.</p>
+  <p id={`${id}-text`}>{full}</p>
+  <div class="copy-actions">
+    <button
+      type="button"
+      class="btn secondary"
+      data-copy={full}
+      data-copy-status={`#${statusId}`}
+    >
+      Copy this
+    </button>
+    <span class="copy-status" id={statusId} role="status" aria-live="polite"
+    ></span>
+  </div>
+  <p class="hint">
+    Share the fact and the link. Tell your own story in your own words. Do not
+    paste someone else's complaint.
+  </p>
+</div>
+
+<script>
+  import "../scripts/clipboard.ts";
+</script>

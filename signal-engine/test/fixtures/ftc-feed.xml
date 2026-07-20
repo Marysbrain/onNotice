@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>FTC Press Releases</title>
+    <link>https://www.ftc.gov/news-events/news/press-releases</link>
+    <item>
+      <title>FTC Takes Action Against Wireless Carrier Over Bill Credits</title>
+      <link>https://www.ftc.gov/news-events/news/press-releases/2026/07/ftc-action-carrier</link>
+      <description><![CDATA[The Federal Trade Commission today announced an action involving <b>trade-in credit</b> practices at a major carrier.]]></description>
+      <pubDate>Mon, 14 Jul 2026 10:00:00 -0400</pubDate>
+    </item>
+    <item>
+      <title>FTC Reaches Settlement in Data Privacy Case</title>
+      <link>https://www.ftc.gov/news-events/news/press-releases/2026/07/ftc-privacy</link>
+      <description>A settlement was reached today.</description>
+      <pubDate>Tue, 15 Jul 2026 09:00:00 -0400</pubDate>
+    </item>
+    <item>
+      <title>Duplicate Link Item</title>
+      <link>https://www.ftc.gov/news-events/news/press-releases/2026/07/ftc-privacy</link>
+      <description>Same link as above, should dedupe.</description>
+      <pubDate>Tue, 15 Jul 2026 09:05:00 -0400</pubDate>
+    </item>
+  </channel>
+</rss>

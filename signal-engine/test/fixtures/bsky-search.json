@@ -1,0 +1,16 @@
+{
+  "posts": [
+    {
+      "uri": "at://did:plc:abc123/app.bsky.feed.post/rkey1",
+      "cid": "cid1",
+      "author": { "did": "did:plc:abc123", "handle": "victim.bsky.social", "displayName": "Jane Doe" },
+      "record": { "text": "AT&T took away my bill credits after six months", "createdAt": "2024-05-01T12:00:00Z" }
+    },
+    {
+      "uri": "at://did:plc:xyz789/app.bsky.feed.post/rkey2",
+      "cid": "cid2",
+      "author": { "did": "did:plc:xyz789", "handle": "someone.bsky.social", "displayName": "John Roe" },
+      "record": { "text": "unrelated chatter about the weather", "createdAt": "2024-05-02T08:00:00Z" }
+    }
+  ]
+}

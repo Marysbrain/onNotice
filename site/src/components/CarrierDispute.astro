@@ -1,0 +1,48 @@
+---
+// Per carrier dispute page stub. Phase 1 does NOT invent notice of dispute
+// addresses. The mailing and dispute addresses are marked as being verified.
+interface Props {
+  name: string;
+}
+const { name } = Astro.props;
+---
+
+<div class="wrap prose" data-pagefind-body>
+  <p class="hint"><a href="/take-action">Back to take action</a></p>
+  <h1>{name} dispute</h1>
+
+  <div class="notice">
+    <p>
+      <strong>Addresses being verified.</strong> We do not publish a notice of
+      dispute address until we have confirmed it from a primary source. The
+      {name} dispute mailing details for this page are being verified and are not
+      shown yet. We will not print an address we have not checked.
+    </p>
+  </div>
+
+  <p>
+    In the meantime, here is what you can do yourself. These steps do not depend
+    on any address we would publish.
+  </p>
+  <ul>
+    <li>
+      Find the dispute or arbitration terms in your own {name} customer
+      agreement. They are in the terms you agreed to.
+    </li>
+    <li>
+      Keep your own records: bills, promotion offers, dates, and what you were
+      told.
+    </li>
+    <li>
+      You can also file an
+      <a href="/take-action">FCC informal complaint or a state attorney general
+      complaint</a> in parallel.
+    </li>
+  </ul>
+
+  <p class="hint">
+    This page gives general information, not legal advice. See the
+    <a href="/legal/action-hub-disclaimer">action hub disclaimer</a>. Use your
+    own facts, in your own words.
+  </p>
+</div>

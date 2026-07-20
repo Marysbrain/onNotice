@@ -1,0 +1,11 @@
+{
+  "generated_at": 1753000000,
+  "records": 412,
+  "verified": 118,
+  "byVetting": {
+    "single_source": 201,
+    "corroborated": 93,
+    "verified_primary": 25,
+    "rejected": 93
+  }
+}

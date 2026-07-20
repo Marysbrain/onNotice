@@ -1,0 +1,16 @@
+{
+  "articles": [
+    {
+      "url": "https://example.com/story-one",
+      "title": "Carrier accused of dropping bill credits - Example News",
+      "domain": "example.com",
+      "seendate": "20240501T120000Z"
+    },
+    {
+      "url": "https://news.example.org/two",
+      "title": "T-Mobile trade-in credit dispute grows - Org News",
+      "domain": "news.example.org",
+      "seendate": "20240502T083000Z"
+    }
+  ]
+}

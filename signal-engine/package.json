@@ -1,0 +1,23 @@
+{
+  "name": "signal-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Carriers On Notice. Track B collectors and job pipeline on Cloudflare Workers.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply signal_engine --local",
+    "migrate:remote": "wrangler d1 migrations apply signal_engine --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.0",
+    "@cloudflare/workers-types": "^5.20260719.1",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.0.0"
+  }
+}

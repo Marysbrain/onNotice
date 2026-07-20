@@ -1,0 +1,18 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+  frontmatter: { title: string; description?: string };
+}
+const { frontmatter } = Astro.props;
+---
+
+<Base title={frontmatter.title} description={frontmatter.description}>
+  <div class="wrap prose legal-doc" data-pagefind-body>
+    <p class="hint">
+      This is a policy document. It is written in plain language. A lawyer should
+      review it before launch.
+    </p>
+    <slot />
+  </div>
+</Base>

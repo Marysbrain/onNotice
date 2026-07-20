@@ -1,0 +1,63 @@
+---
+// Citation block pattern, repeated on every evidence record page.
+// Fields: claim, source URL, capture date, excerpt, archive link, and a
+// copyable citation string. Enforces the guardrail that every public claim
+// traces to a record and every data point links to its public source.
+import type { EvidenceRecord } from "../data/records";
+import { carrierLabel } from "../data/records";
+
+interface Props {
+  record: EvidenceRecord;
+}
+const { record } = Astro.props;
+const citeString = `Carriers On Notice (SAMPLE record). "${record.title}." ${record.sourceName}. ${record.sourceUrl}. Captured ${record.captureDate}.`;
+const citeId = `cite-${record.slug}`;
+const statusId = `${citeId}-status`;
+---
+
+<section class="citation" aria-label="Citation">
+  <p><span class="sample-badge">SAMPLE</span> Citation block</p>
+  <dl>
+    <dt>Claim</dt>
+    <dd>{record.claim}</dd>
+    <dt>Carrier</dt>
+    <dd>{carrierLabel(record.carrier)}</dd>
+    <dt>Source</dt>
+    <dd>
+      <a href={record.sourceUrl} rel="nofollow noopener" target="_blank"
+        >{record.sourceName}</a
+      >
+    </dd>
+    <dt>Capture date</dt>
+    <dd>{record.captureDate}</dd>
+    <dt>Excerpt</dt>
+    <dd>{record.excerpt}</dd>
+    <dt>Archive</dt>
+    <dd>
+      <a href={record.archiveUrl} rel="nofollow noopener" target="_blank"
+        >Wayback snapshot lookup</a
+      >
+    </dd>
+    <dt>Vetting</dt>
+    <dd>{record.vetting.replace("_", " ")}</dd>
+  </dl>
+
+  <p class="hint" style="margin-top:0.9rem;">Copyable citation string</p>
+  <pre class="cite-string" id={citeId}>{citeString}</pre>
+  <div class="copy-actions" style="margin-top:0.5rem;">
+    <button
+      type="button"
+      class="btn secondary"
+      data-copy-target={`#${citeId}`}
+      data-copy-status={`#${statusId}`}
+    >
+      Copy citation
+    </button>
+    <span class="copy-status" id={statusId} role="status" aria-live="polite"
+    ></span>
+  </div>
+</section>
+
+<script>
+  import "../scripts/clipboard.ts";
+</script>

@@ -1,0 +1,334 @@
+---
+import Base from "../layouts/Base.astro";
+import CopyBlock from "../components/CopyBlock.astro";
+import { buildChoropleth, fillFor, WIDTH, HEIGHT, BIN_VARS } from "../lib/geo";
+import { records } from "../data/records";
+
+const model = buildChoropleth();
+
+// Flames on the top concentrations only, sized by intensity. Real SVG nodes so
+// they are keyboard reachable and clickable.
+const withData = model.states.filter((s) => s.count > 0);
+const topFlames = [...withData].sort((a, b) => b.count - a.count).slice(0, 6);
+const maxCount = model.maxCount;
+
+// Data embedded for the island: records for the panel, plus state lookups.
+const mapDataForClient = {
+  records: records.map((r) => ({
+    slug: r.slug,
+    title: r.title,
+    carrier: r.carrier,
+    claimType: r.claimType,
+    state: r.state,
+    eventDate: r.eventDate,
+    vetting: r.vetting,
+  })),
+  stateNames: Object.fromEntries(model.states.map((s) => [s.abbr, s.name])),
+  stateCounts: Object.fromEntries(model.states.map((s) => [s.abbr, s.count])),
+};
+
+const carriers = [
+  { value: "att", label: "AT&T" },
+  { value: "verizon", label: "Verizon" },
+  { value: "tmobile", label: "T-Mobile" },
+];
+const years = ["2014", "2026"];
+
+// A flame path scaled by intensity.
+function flameSize(count: number): number {
+  return 10 + Math.round((count / maxCount) * 16); // 10..26 px
+}
+---
+
+<Base
+  title="Map"
+  description="A state level map of wireless billing complaint concentration, all carriers, from the FCC layer. Sample data until launch."
+>
+  <div class="wrap">
+    <h1>The map</h1>
+    <div class="notice">
+      <p>
+        <span class="sample-badge">SAMPLE</span> The data on this map is sample
+        data until launch. The numbers are modest placeholders, not real counts.
+      </p>
+    </div>
+
+    <p class="prose">
+      This map colors each state by wireless billing complaint concentration for
+      all carriers, from the FCC layer. The FCC complaint dataset has no carrier
+      name field, so this layer is never per carrier. The carrier filter below
+      applies only to the carrier tagged records in the drill down panel, not to
+      the map color.
+    </p>
+
+    <div id="map-root">
+      <div class="map-controls" role="group" aria-label="Map controls">
+        <label class="toggle">
+          <input type="checkbox" id="flame-toggle" checked />
+          Flames (hot spots)
+        </label>
+
+        <div class="ctrl">
+          <label for="carrier-filter">Carrier</label>
+          <select id="carrier-filter">
+            <option value="">All (records layer)</option>
+            {carriers.map((c) => <option value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+
+        <div class="ctrl">
+          <label for="time-filter">Year</label>
+          <select id="time-filter">
+            <option value="">All years</option>
+            {years.map((y) => <option value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        <button type="button" id="reset-view" class="btn secondary">
+          Reset view
+        </button>
+      </div>
+
+      <p class="hint">
+        Carrier and Year filter the sourced records shown in the panel. They do
+        not change the FCC complaint color layer, which has no carrier or time
+        breakdown in this sample.
+      </p>
+
+      <div class="legend" aria-hidden="false">
+        <span>Complaint concentration:</span>
+        {
+          BIN_VARS.map((v, i) => (
+            <span>
+              <span class="swatch" style={`background:${v}`} />
+              {i === 0 ? "lowest" : i === BIN_VARS.length - 1 ? "highest" : ""}
+            </span>
+          ))
+        }
+        <span
+          ><span class="swatch" style="background:var(--surface)"></span> no
+          sample data</span
+        >
+      </div>
+
+      <div class="map-and-panel">
+        <div class="map-frame">
+          <svg
+            class="us-map"
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            role="group"
+            aria-label="United States choropleth of wireless billing complaint concentration, all carriers. Sample data. A data table with the same values follows below the map."
+          >
+            <g id="state-layer">
+              {
+                model.states.map((s) => (
+                  <path
+                    class="state"
+                    d={s.path}
+                    data-abbr={s.abbr}
+                    data-count={s.count}
+                    tabindex="0"
+                    role="button"
+                    aria-pressed="false"
+                    aria-label={`${s.name}. ${s.count} complaints. Sample data. Press Enter to open records.`}
+                    fill={fillFor(s.bin)}
+                  />
+                ))
+              }
+            </g>
+            <g id="flame-layer">
+              {
+                topFlames.map((s) => {
+                  const size = flameSize(s.count);
+                  return (
+                    <g
+                      class="flame"
+                      data-abbr={s.abbr}
+                      tabindex="0"
+                      role="button"
+                      aria-label={`Hot spot: ${s.name}, ${s.count} complaints. Sample data. Press Enter to open records.`}
+                      transform={`translate(${s.cx}, ${s.cy})`}
+                    >
+                      <title>{`${s.name}: ${s.count} (sample)`}</title>
+                      <path
+                        d="M0 -1 C 0.5 -0.4, -0.4 -0.2, -0.15 0.25 C -0.28 0.15, -0.3 0.4, -0.15 0.55 C 0 0.75, 0.35 0.6, 0.35 0.25 C 0.35 -0.1, 0 -0.2, 0 -1 Z"
+                        transform={`scale(${size})`}
+                        fill="var(--accent)"
+                        stroke="#000"
+                        stroke-width="0.03"
+                      />
+                    </g>
+                  );
+                })
+              }
+            </g>
+          </svg>
+        </div>
+
+        <aside
+          id="drill-panel"
+          class="drill-panel"
+          aria-label="Drill down details"
+          hidden
+        >
+          <button type="button" id="drill-close" class="btn secondary">
+            Close panel
+          </button>
+          <div id="drill-body"></div>
+        </aside>
+      </div>
+    </div>
+
+    <h2 id="data-table">Data table</h2>
+    <p class="prose">
+      This table mirrors the map. It is the screen reader path and it works with
+      no color vision at all. <span class="sample-badge">SAMPLE</span>
+    </p>
+    <div class="table-scroll">
+      <table class="data-table">
+        <caption>
+          Wireless billing complaint concentration by state, all carriers. FCC
+          layer. Sample data.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">State</th>
+            <th scope="col">USPS</th>
+            <th scope="col">Complaints (sample)</th>
+            <th scope="col">Concentration band</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            model.states
+              .filter((s) => s.count > 0)
+              .sort((a, b) => b.count - a.count)
+              .map((s) => (
+                <tr>
+                  <td>{s.name}</td>
+                  <td>{s.abbr}</td>
+                  <td>{s.count}</td>
+                  <td>
+                    {s.bin < 0
+                      ? "no data"
+                      : `band ${s.bin + 1} of ${BIN_VARS.length}`}
+                  </td>
+                </tr>
+              ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Share this view</h2>
+    <p class="prose">
+      Every filter, the flame toggle, and the selected state all live in the
+      address bar. Copy the link and you share the exact view you are looking
+      at.
+    </p>
+    <CopyBlock
+      id="map-share"
+      text="Wireless billing complaints cluster in some states more than others. See the map (sample data until launch) on Carriers On Notice."
+      link="https://carriersonnotice.com/map"
+    />
+  </div>
+
+  <script>
+    import "../scripts/map-island.ts";
+  </script>
+
+  <style>
+    .map-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: end;
+      margin: 1rem 0 0.5rem;
+    }
+    .map-controls .ctrl label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+    .map-controls select {
+      font: inherit;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-weight: 700;
+    }
+    .map-and-panel {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    @media (min-width: 60rem) {
+      .map-and-panel {
+        grid-template-columns: 2fr 1fr;
+        align-items: start;
+      }
+    }
+    .map-frame {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      padding: 0.5rem;
+      overflow-x: auto;
+    }
+    .us-map {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .state {
+      stroke: var(--border);
+      stroke-width: 0.75;
+      cursor: pointer;
+    }
+    .state:hover {
+      stroke: var(--text);
+      stroke-width: 1.5;
+    }
+    .state[aria-pressed="true"] {
+      stroke: var(--focus);
+      stroke-width: 2.5;
+    }
+    .flame {
+      cursor: pointer;
+    }
+    .drill-panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      padding: 1rem;
+      position: sticky;
+      top: 1rem;
+    }
+    .panel-records {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0;
+    }
+    .panel-records li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+
+  <script type="application/json" id="map-data" set:html={JSON.stringify(mapDataForClient)} is:inline />
+</Base>

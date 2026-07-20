@@ -1,0 +1,6 @@
+# Reads are open to crawlers. This is a public evidence library.
+# Write paths (the story form) post to a Worker gated by Turnstile, not here.
+User-agent: *
+Allow: /
+
+Sitemap: https://carriersonnotice.com/sitemap.xml

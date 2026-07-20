@@ -1,0 +1,17 @@
+{
+  "generated_at": 1753000000,
+  "rows": [
+    { "source_id": "bluesky", "carrier": "att", "month": "2026-06", "mentions": 34 },
+    { "source_id": "bluesky", "carrier": "verizon", "month": "2026-06", "mentions": 28 },
+    { "source_id": "bluesky", "carrier": "tmobile", "month": "2026-06", "mentions": 22 },
+    { "source_id": "hackernews", "carrier": "att", "month": "2026-06", "mentions": 9 },
+    { "source_id": "hackernews", "carrier": "verizon", "month": "2026-06", "mentions": 6 },
+    { "source_id": "hackernews", "carrier": "tmobile", "month": "2026-06", "mentions": 5 },
+    { "source_id": "bluesky", "carrier": "att", "month": "2026-05", "mentions": 31 },
+    { "source_id": "bluesky", "carrier": "verizon", "month": "2026-05", "mentions": 25 },
+    { "source_id": "bluesky", "carrier": "tmobile", "month": "2026-05", "mentions": 19 },
+    { "source_id": "hackernews", "carrier": "att", "month": "2026-05", "mentions": 7 },
+    { "source_id": "hackernews", "carrier": "verizon", "month": "2026-05", "mentions": 4 },
+    { "source_id": "hackernews", "carrier": "tmobile", "month": "2026-05", "mentions": 4 }
+  ]
+}

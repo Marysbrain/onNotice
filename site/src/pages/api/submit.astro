@@ -1,0 +1,30 @@
+---
+import Base from "../../layouts/Base.astro";
+// Phase 1 stub. The static site has no server. This page stands in for the
+// submission endpoint. At launch a Cloudflare Worker at this path receives the
+// POST, checks Turnstile, rate limits, and stores the story for review. See the
+// README deploy day items.
+---
+
+<Base title="Submissions open at launch" description="The story submission endpoint is a stub in phase 1.">
+  <div class="wrap prose">
+    <h1>Submissions open at launch</h1>
+    <div class="notice">
+      <p>
+        This is a placeholder. Story submissions are not open yet. Nothing was
+        sent and nothing was stored.
+      </p>
+    </div>
+    <p>
+      At launch, this address becomes a protected endpoint. It will check the
+      Turnstile human challenge, rate limit requests, and hand your story to a
+      person for review before anything is published. None of that runs in phase
+      1.
+    </p>
+    <p>
+      Go back to <a href="/tell">tell your story</a> to read the consent notice
+      and see the fields, or head to <a href="/take-action">take action</a> to
+      file with the FCC or your state attorney general now.
+    </p>
+  </div>
+</Base>

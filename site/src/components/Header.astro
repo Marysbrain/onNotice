@@ -1,0 +1,29 @@
+---
+// Header. Shows the running verified count from totals.json, read at build time
+// so it renders as static HTML with no client JavaScript.
+import totals from "../../public/aggregates/totals.json";
+
+const verified = totals.verified;
+const nav = [
+  { href: "/map", label: "Map" },
+  { href: "/library", label: "Library" },
+  { href: "/take-action", label: "Take Action" },
+  { href: "/tell", label: "Tell Your Story" },
+  { href: "/methodology", label: "Methodology" },
+  { href: "/search", label: "Search" },
+];
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/">Carriers On Notice</a>
+    <span class="count-pill" title="Verified records. Sample data until launch.">
+      <strong>{verified.toLocaleString("en-US")}</strong>
+      <span>verified records</span>
+      <span class="sample-badge">SAMPLE</span>
+    </span>
+    <nav class="site-nav" aria-label="Primary">
+      {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+    </nav>
+  </div>
+</header>

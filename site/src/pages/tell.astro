@@ -1,0 +1,187 @@
+---
+import Base from "../layouts/Base.astro";
+
+// Turnstile site key comes from a public env var. In phase 1 we render a
+// placeholder only. The real Cloudflare Turnstile widget script is added at
+// deploy. We never ship a tracking script here.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+---
+
+<Base
+  title="Tell your story"
+  description="Share what happened with a carrier device promotion, in your own words. You choose to send it. A person reviews it before anything is published."
+>
+  <div class="wrap prose" data-pagefind-body>
+    <h1>Tell your story</h1>
+
+    <div class="notice">
+      <p>
+        <strong>Submissions open at launch.</strong> This form is not live yet.
+        The consent notice and the fields below are the real ones. When we
+        launch, the form will post to a protected endpoint and a person will
+        review every story.
+      </p>
+    </div>
+
+    <h2>Read this before you submit</h2>
+    <p>By submitting, you agree to this consent notice.</p>
+
+    <div class="citation" aria-label="Submission consent">
+      <p>
+        <strong>What happens to my story.</strong> I am sending my story so it can
+        help show a pattern. A person on the team reads it before anything is
+        published. It is not posted automatically.
+      </p>
+      <p>
+        <strong>Who reads it.</strong> The team reads it during review. If facts
+        need checking, a reviewer may look at it more closely.
+      </p>
+      <p>
+        <strong>What gets removed before it is shown.</strong> Before my story is
+        displayed, the team scrubs out anything that identifies me. That includes
+        my name, account numbers, my exact address, and other identifying
+        details. If a location is shown, it is only at the city, state, or zip
+        level. Never my exact address.
+      </p>
+      <p>
+        <strong>Contact and verification.</strong> If I choose to give contact
+        info, the team may contact me to check facts. Giving contact info is
+        optional. My contact info is never displayed.
+      </p>
+      <p>
+        <strong>Withdrawing my story.</strong> I can withdraw my story at any
+        time. If I ask, the team takes it off the site. The team keeps an internal
+        copy for its records, and that copy is never displayed or shared.
+      </p>
+      <p>
+        <strong>No lawyer or agent relationship.</strong> Submitting my story does
+        not make anyone here my lawyer or my agent. No one here represents me.
+      </p>
+      <p>
+        <strong>My promise about the story.</strong> I confirm this story is mine.
+        I confirm it is true to the best of my knowledge.
+      </p>
+      <p><strong>My age.</strong> I confirm I am at least 18 years old.</p>
+      <p>
+        The full text is on the
+        <a href="/legal/submission-consent">submission consent</a> page.
+      </p>
+    </div>
+
+    <h2>Your story</h2>
+    <form action="/api/submit" method="post" novalidate>
+      <div class="field">
+        <label for="what-happened">What happened</label>
+        <textarea
+          id="what-happened"
+          name="what_happened"
+          required
+          placeholder="Tell it in your own words. What were you promised, and what actually happened? Talk to text works fine."
+        ></textarea>
+        <p class="hint">Use your own words. Do not copy someone else's story.</p>
+      </div>
+
+      <div class="field">
+        <label for="carrier">Carrier</label>
+        <select id="carrier" name="carrier">
+          <option value="">Choose one</option>
+          <option value="att">AT&T</option>
+          <option value="verizon">Verizon</option>
+          <option value="tmobile">T-Mobile</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="city">City</label>
+        <input id="city" name="city" type="text" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="state">State</label>
+        <input
+          id="state"
+          name="state"
+          type="text"
+          maxlength="2"
+          placeholder="Two letters, like CA"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="zip">ZIP</label>
+        <input
+          id="zip"
+          name="zip"
+          type="text"
+          inputmode="numeric"
+          maxlength="5"
+          autocomplete="off"
+        />
+        <p class="hint">
+          Location is shown at city, state, or zip level only. Never your exact
+          address.
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="contact">Contact (optional)</label>
+        <input id="contact" name="contact" type="text" autocomplete="off" />
+        <p class="hint">
+          Optional. Only used to check facts with you. Never displayed. Ever.
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="agree">
+          <input id="agree" name="agree" type="checkbox" style="width:auto;" />
+          I have read the consent notice above and I agree to it.
+        </label>
+      </div>
+
+      <div class="field">
+        <p class="hint">Human check</p>
+        <div
+          class="turnstile-placeholder"
+          data-sitekey={turnstileSiteKey || "set-PUBLIC_TURNSTILE_SITE_KEY-at-deploy"}
+        >
+          Cloudflare Turnstile appears here at launch. It checks that a real
+          person is submitting. It is not a tracking cookie.
+        </div>
+      </div>
+
+      <button type="submit" class="btn" disabled aria-disabled="true">
+        Submit (opens at launch)
+      </button>
+      <p class="hint">
+        The submit button is off in phase 1. There is no live endpoint yet, so
+        nothing is sent.
+      </p>
+    </form>
+
+    <h2>After a story is verified</h2>
+    <p>
+      Once a story is reviewed, scrubbed, and consented, it gets its own stable
+      page with a share card. You can post your own story link back to wherever
+      you first vented. That is an invitation, not a task. No reward, no counter,
+      no badge for sharing.
+    </p>
+  </div>
+
+  <style>
+    .turnstile-placeholder {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--bg);
+      color: var(--text-soft);
+      max-width: var(--measure);
+      font-size: 0.95rem;
+    }
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
+</Base>
