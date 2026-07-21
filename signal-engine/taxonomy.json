@@ -1,47 +1,194 @@
 {
-  "version": 1,
-  "note": "Keyword taxonomy as data. Track C extends this. Match is case-insensitive substring unless a term is marked regex. Do not hardcode these in source.",
-  "carriers": [
-    {
-      "id": "att",
-      "display": "AT&T",
-      "patterns": ["at&t", "at & t", "att mobility", "at&t mobility", "cricket", "cricket wireless"],
-      "arb_respondent_patterns": ["at&t mobility", "at&t services", "at&t corp", "cricket"],
-      "promo_names": ["next up", "att next", "next up anytime", "installment plan", "device unlock", "trade in and save", "buy one get one", "bogo", "unlimited your way"]
-    },
-    {
-      "id": "verizon",
-      "display": "Verizon",
-      "patterns": ["verizon", "verizon wireless", "visible", "total by verizon", "total wireless"],
-      "arb_respondent_patterns": ["verizon wireless", "cellco partnership", "verizon"],
-      "promo_names": ["device payment", "verizon device payment", "promo credit", "myplan", "new phone on us", "select 5g plans", "trade in guarantee", "switch and save"]
-    },
-    {
-      "id": "tmobile",
-      "display": "T-Mobile",
-      "patterns": ["t-mobile", "tmobile", "t mobile", "metro", "metropcs", "metro by t-mobile", "mint mobile"],
-      "arb_respondent_patterns": ["t-mobile us", "t-mobile usa", "metropcs", "metro"],
-      "promo_names": ["equipment installment plan", "eip", "insider", "keep and switch", "go5g", "go5g plus", "phone freedom", "24 monthly bill credits", "trade in and get"]
-    }
-  ],
-  "issue_terms": [
-    { "id": "on_us", "term": "on us", "note": "the promo hook" },
-    { "id": "trade_in_credit", "term": "trade-in credit" },
-    { "id": "trade_in_credit_alt", "term": "trade in credit" },
-    { "id": "bill_credits", "term": "bill credits" },
-    { "id": "bill_credit", "term": "bill credit" },
-    { "id": "term_36mo", "term": "36 months" },
-    { "id": "term_24mo", "term": "24 months" },
-    { "id": "promotional_credit", "term": "promotional credit" },
-    { "id": "promotional_credit_removed", "term": "promotional credit removed" },
-    { "id": "credit_clawback", "term": "credit clawback" },
-    { "id": "clawback", "term": "clawback" },
-    { "id": "credit_stopped", "term": "credits stopped" },
-    { "id": "credit_disappeared", "term": "credits disappeared" }
-  ],
-  "carrier_issue_variants": {
-    "att": ["next up", "att next", "installment plan", "device unlock"],
-    "verizon": ["device payment", "verizon device payment", "promo credit"],
-    "tmobile": ["equipment installment plan", "eip", "insider", "keep and switch"]
+ "version": 1,
+ "note": "Keyword taxonomy as data. Track C extends this. Match is case-insensitive substring unless a term is marked regex. Do not hardcode these in source.",
+ "carriers": [
+  {
+   "id": "att",
+   "display": "AT&T",
+   "patterns": [
+    "at&t",
+    "at & t",
+    "att mobility",
+    "at&t mobility",
+    "cricket",
+    "cricket wireless"
+   ],
+   "arb_respondent_patterns": [
+    "at&t mobility",
+    "at&t services",
+    "at&t corp",
+    "cricket"
+   ],
+   "promo_names": [
+    "next up",
+    "att next",
+    "next up anytime",
+    "installment plan",
+    "device unlock",
+    "trade in and save",
+    "buy one get one",
+    "bogo",
+    "unlimited your way"
+   ]
+  },
+  {
+   "id": "verizon",
+   "display": "Verizon",
+   "patterns": [
+    "verizon",
+    "verizon wireless",
+    "visible",
+    "total by verizon",
+    "total wireless"
+   ],
+   "arb_respondent_patterns": [
+    "verizon wireless",
+    "cellco partnership",
+    "verizon"
+   ],
+   "promo_names": [
+    "device payment",
+    "verizon device payment",
+    "promo credit",
+    "myplan",
+    "new phone on us",
+    "select 5g plans",
+    "trade in guarantee",
+    "switch and save"
+   ]
+  },
+  {
+   "id": "tmobile",
+   "display": "T-Mobile",
+   "patterns": [
+    "t-mobile",
+    "tmobile",
+    "t mobile",
+    "metro",
+    "metropcs",
+    "metro by t-mobile",
+    "mint mobile"
+   ],
+   "arb_respondent_patterns": [
+    "t-mobile us",
+    "t-mobile usa",
+    "metropcs",
+    "metro"
+   ],
+   "promo_names": [
+    "equipment installment plan",
+    "eip",
+    "insider",
+    "keep and switch",
+    "go5g",
+    "go5g plus",
+    "phone freedom",
+    "24 monthly bill credits",
+    "trade in and get"
+   ]
   }
+ ],
+ "issue_terms": [
+  {
+   "id": "on_us",
+   "term": "on us",
+   "note": "the promo hook"
+  },
+  {
+   "id": "trade_in_credit",
+   "term": "trade-in credit"
+  },
+  {
+   "id": "trade_in_credit_alt",
+   "term": "trade in credit"
+  },
+  {
+   "id": "bill_credits",
+   "term": "bill credits"
+  },
+  {
+   "id": "bill_credit",
+   "term": "bill credit"
+  },
+  {
+   "id": "term_36mo",
+   "term": "36 months"
+  },
+  {
+   "id": "term_24mo",
+   "term": "24 months"
+  },
+  {
+   "id": "promotional_credit",
+   "term": "promotional credit"
+  },
+  {
+   "id": "promotional_credit_removed",
+   "term": "promotional credit removed"
+  },
+  {
+   "id": "credit_clawback",
+   "term": "credit clawback"
+  },
+  {
+   "id": "clawback",
+   "term": "clawback"
+  },
+  {
+   "id": "credit_stopped",
+   "term": "credits stopped"
+  },
+  {
+   "id": "credit_disappeared",
+   "term": "credits disappeared"
+  },
+  {
+   "id": "unjust_enrichment",
+   "term": "unjust enrichment",
+   "note": "the legal claim behind forfeited-credit suits"
+  },
+  {
+   "id": "credit_forfeit",
+   "term": "credits forfeited"
+  },
+  {
+   "id": "credit_forfeit_alt",
+   "term": "forfeit your credits"
+  },
+  {
+   "id": "remaining_balance_due",
+   "term": "remaining balance becomes due"
+  },
+  {
+   "id": "balance_accelerated",
+   "term": "balance is due in full"
+  },
+  {
+   "id": "service_cancelled_credits",
+   "term": "cancel service credits"
+  },
+  {
+   "id": "device_balance",
+   "term": "device balance"
+  }
+ ],
+ "carrier_issue_variants": {
+  "att": [
+   "next up",
+   "att next",
+   "installment plan",
+   "device unlock"
+  ],
+  "verizon": [
+   "device payment",
+   "verizon device payment",
+   "promo credit"
+  ],
+  "tmobile": [
+   "equipment installment plan",
+   "eip",
+   "insider",
+   "keep and switch"
+  ]
+ }
 }
