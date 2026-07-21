@@ -4,7 +4,7 @@ import { sha256Hex } from "../lib/hash.js";
 import { normalizeText, unifiedDiff } from "../lib/diff.js";
 import { saveToWayback } from "../lib/wayback.js";
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 
 // Fallback for targets behind a bot wall (T-Mobile's Akamai returns 403 to the
 // honest UA). We identify honestly first and only present browser headers on a

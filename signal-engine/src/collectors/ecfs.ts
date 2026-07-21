@@ -114,7 +114,7 @@ export async function collectEcfs(env: Env): Promise<{ source: string; new: numb
         `https://publicapi.fcc.gov/ecfs/filings?api_key=${encodeURIComponent(env.ECFS_API_KEY)}` +
         `&q=${encodeURIComponent(`"${phrase}"`)}&sort=date_received,DESC&limit=${MAX_RECORDS_PER_RUN}`;
       const res = await fetch(url, {
-        headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "application/json" },
+        headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)", Accept: "application/json" },
       });
       if (!res.ok) {
         out.push({ source: src.id, new: 0 });

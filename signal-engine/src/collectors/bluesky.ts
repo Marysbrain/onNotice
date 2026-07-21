@@ -12,7 +12,7 @@ import type { FetchImpl } from "../lib/http.js";
 // store a bsky.app/profile/<did> permalink, so nothing copies the DID into a
 // second field. Track E builds the human link on demand with blueskyPermalink().
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 const SEARCH = "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts";
 const PER_PHRASE = 25;
 const MAX_RECORDS_PER_RUN = 100;

@@ -55,7 +55,7 @@ export async function runFccAggregateBackfill(
     return { month, rows: 0, more: false, cursorKey: month };
   }
 
-  const headers: Record<string, string> = { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "application/json" };
+  const headers: Record<string, string> = { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)", Accept: "application/json" };
   const token = await getConfigString(env, "SOCRATA_APP_TOKEN_PUBLIC", "");
   if (token) headers["X-App-Token"] = token;
 

@@ -66,7 +66,7 @@ export async function runFtcBackfill(
   let items: FtcItem[] = [];
   try {
     const res = await doFetch(buildFtcListUrl(BASE, page), {
-      headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "text/html" },
+      headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)", Accept: "text/html" },
     });
     if (res.ok) items = parseFtcListing(await res.text());
   } catch {

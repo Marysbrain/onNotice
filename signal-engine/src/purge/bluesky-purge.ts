@@ -22,7 +22,7 @@ import type { FetchImpl } from "../lib/http.js";
 const BATCH = 50;
 const CHUNK = 25; // getPosts hard limit per call
 const SOURCE_IDS = ["bluesky"];
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 const GET_POSTS = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts";
 
 // URIs present in a getPosts response. Only these still exist.

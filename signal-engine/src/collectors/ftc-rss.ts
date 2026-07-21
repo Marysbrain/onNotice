@@ -3,7 +3,7 @@ import { parseFeed, buildExcerpt } from "../lib/rss.js";
 import { enabledSources, insertRecord, touchSource } from "../db/records.js";
 import { matchCarrier, isTelecomRelevant } from "../lib/taxonomy.js";
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 
 // Poll the FTC feeds. Each item becomes a record. Dedupe by link. FTC releases
 // are public-domain primary documents, so vetting_status is verified_primary.

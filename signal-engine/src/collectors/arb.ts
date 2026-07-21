@@ -3,7 +3,7 @@ import { enabledSources, touchSource, type SourceRow } from "../db/records.js";
 import { enqueueJob } from "../db/jobs.js";
 import { saveToWayback } from "../lib/wayback.js";
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 
 // Resolve the current data-file link on an arbitration landing page. Best-effort:
 // scan anchors for xlsx/xls/csv. Prefer a link whose text/href names a year, so

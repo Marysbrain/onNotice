@@ -10,7 +10,7 @@ import type { FetchImpl } from "../lib/http.js";
 // item id, our re-resolution key for deletion honoring), the item permalink
 // (which carries no username), the date, and a trimmed, HTML-stripped excerpt.
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 const SEARCH = "https://hn.algolia.com/api/v1/search_by_date";
 const PER_PHRASE = 25;
 const MAX_RECORDS_PER_RUN = 100;

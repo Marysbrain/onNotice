@@ -63,7 +63,7 @@ export async function collectSocrata(env: Env): Promise<{ source: string; new: n
   const sources = await enabledSources(env, "socrata");
   const out: { source: string; new: number }[] = [];
   const headers: Record<string, string> = {
-    "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)",
+    "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)",
     Accept: "application/json",
   };
   if (env.SOCRATA_APP_TOKEN) headers["X-App-Token"] = env.SOCRATA_APP_TOKEN;

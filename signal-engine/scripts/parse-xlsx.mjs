@@ -55,7 +55,7 @@ async function loadWorkbook(src) {
   }
   const wb = new ExcelJS.Workbook();
   if (/^https?:\/\//i.test(src)) {
-    const res = await fetch(src, { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)" } });
+    const res = await fetch(src, { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)" } });
     if (!res.ok) throw new Error(`fetch ${src} -> ${res.status}`);
     const buf = Buffer.from(await res.arrayBuffer());
     await wb.xlsx.load(buf);

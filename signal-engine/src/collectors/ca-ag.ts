@@ -3,7 +3,7 @@ import { parseFeed, buildExcerpt } from "../lib/rss.js";
 import { enabledSources, insertRecord, touchSource } from "../db/records.js";
 import { matchCarrier, hasTaxonomyMatch } from "../lib/taxonomy.js";
 
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 
 // California AG news feed. Same shape as the FTC RSS collector, but we do not
 // store every item. AG news covers everything the office does, so only items

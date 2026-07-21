@@ -13,7 +13,7 @@ import { fetchWithRetry, type FetchImpl, type SleepImpl } from "../lib/http.js";
 //   GDELT DOC 2.0    (kind 'news_api')  strictly paced, 429-aware (1 req / 5s)
 
 const MAX_RECORDS_PER_RUN = 25;
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 
 // One boolean query bundle across carriers and promo terms. Kept short so the
 // query string stays small.

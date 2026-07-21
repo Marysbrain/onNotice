@@ -100,7 +100,7 @@ export async function runWaybackBackfill(
 
   let captures: Capture[] = [];
   try {
-    const res = await doFetch(buildCdxUrl(target.url!), { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "application/json" } });
+    const res = await doFetch(buildCdxUrl(target.url!), { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)", Accept: "application/json" } });
     if (res.ok) captures = parseCdx(await res.json());
   } catch {
     captures = [];
@@ -111,7 +111,7 @@ export async function runWaybackBackfill(
   for (const cap of batch) {
     let text = "";
     try {
-      const res = await doFetch(contentUrl(cap.timestamp, cap.original), { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)" } });
+      const res = await doFetch(contentUrl(cap.timestamp, cap.original), { headers: { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)" } });
       if (res.ok) text = normalizeText(await res.text());
     } catch {
       text = "";

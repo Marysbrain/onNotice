@@ -95,7 +95,7 @@ export async function runCourtListenerBackfill(
   let termIndex = cursor.termIndex ?? 0;
   let next: string | null = typeof cursor.next === "string" && cursor.next.startsWith(HOST) ? cursor.next : null;
 
-  const headers: Record<string, string> = { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "application/json" };
+  const headers: Record<string, string> = { "User-Agent": "carriers-on-notice/0.1 (+contact@carriersonnotice.com)", Accept: "application/json" };
   if (env.COURTLISTENER_TOKEN) headers["Authorization"] = `Token ${env.COURTLISTENER_TOKEN}`;
 
   let inserted = 0;

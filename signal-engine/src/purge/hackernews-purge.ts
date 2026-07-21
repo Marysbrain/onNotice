@@ -17,7 +17,7 @@ import type { FetchImpl } from "../lib/http.js";
 
 const BATCH = 20;
 const SOURCE_IDS = ["hackernews"];
-const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
+const UA = "carriers-on-notice/0.1 (+contact@carriersonnotice.com)";
 const ITEM = "https://hn.algolia.com/api/v1/items";
 
 // Decide from a fetch outcome whether an HN item is gone. 404 means removed.
