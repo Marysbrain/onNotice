@@ -6,10 +6,10 @@
   "name": "con-site",
   "main": "worker.js",
   "compatibility_date": "2026-07-01",
-  "routes": [
-    { "pattern": "carriersonnotice.com", "custom_domain": true },
-    { "pattern": "www.carriersonnotice.com", "custom_domain": true }
-  ],
+  // Custom domains are attached via the API (PUT accounts/.../workers/domains),
+  // NOT declared here. Declaring them as routes while the domain attachments
+  // were in a bad state broke ALL routing for this worker, including
+  // workers.dev, with Cloudflare error 1042 (2026-07-21 outage, see commit).
   "d1_databases": [
     {
       "binding": "DB",
@@ -23,7 +23,7 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
     // Without this the asset layer answers directly and worker.js never runs,
-    // so the staging noindex header would silently vanish.
+    // so the staging noindex header and POST /api/submit handling would break.
     "run_worker_first": true
   }
 }
