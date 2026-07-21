@@ -1,6 +1,6 @@
 import type { Env } from "../env.js";
 import { enabledSources, insertRecord, touchSource } from "../db/records.js";
-import { matchCarrier, searchPhrases } from "../lib/taxonomy.js";
+import { matchCarrier, hasTaxonomyMatch, searchPhrases } from "../lib/taxonomy.js";
 import type { FetchImpl } from "../lib/http.js";
 
 // Bluesky public search. Unauthenticated read. Once daily per phrase bundle.
@@ -69,6 +69,9 @@ export async function collectBluesky(
         const items = parseBlueskySearch(await res.json());
         for (const item of items) {
           if (added >= MAX_RECORDS_PER_RUN) break;
+          // Registry rule: only carrier or promo-credit-topic posts become
+          // records, whatever the search returned.
+          if (!hasTaxonomyMatch(item.text)) continue;
           const inserted = await insertRecord(env, {
             // AT-URI is both the dedupe key and the stored source pointer.
             dedupeKey: item.uri,

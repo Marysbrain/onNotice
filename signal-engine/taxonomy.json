@@ -13,6 +13,7 @@
     "cricket wireless"
    ],
    "arb_respondent_patterns": [
+    "at&t",
     "at&t mobility",
     "at&t services",
     "at&t corp",
@@ -32,6 +33,7 @@
    "patterns": [
     "verizon",
     "verizon wireless",
+    "cellco partnership",
     "visible wireless",
     "visible by verizon",
     "total by verizon",
@@ -60,6 +62,8 @@
     "mint mobile"
    ],
    "arb_respondent_patterns": [
+    "t-mobile",
+    "tmobile",
     "t-mobile us",
     "t-mobile usa",
     "metropcs",

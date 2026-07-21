@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseFeed, buildExcerpt } from "../src/lib/rss.js";
 import { normalizeText, unifiedDiff } from "../src/lib/diff.js";
-import { parseCsv } from "../src/processors/parse-file.js";
+import { parseCsv, findColumn, parseArbDate, RESPONDENT_COLUMNS, CASE_ID_COLUMNS, FILING_DATE_COLUMNS } from "../src/processors/parse-file.js";
 import { matchCarrier, matchArbRespondent, isTelecomRelevant } from "../src/lib/taxonomy.js";
 import ftcFeed from "./fixtures/ftc-feed.xml?raw";
 
@@ -65,6 +65,28 @@ describe("csv parse", () => {
     expect(rows.length).toBe(3);
     expect(rows[1]![0]).toBe("AT&T Mobility, LLC");
     expect(rows[2]![1]).toBe("1,200");
+  });
+});
+
+describe("arbitration file columns", () => {
+  // The real AAA Q1 2026 header row, abbreviated to the collision-prone part.
+  const aaaHeader = [
+    "nonconsumer", "initiating party", "source of authority", "typedispute",
+    "dispute subtype", "salary range", "prevailing party", "filing date",
+    "closedate", "type of disposition", "claim amt business", "claim amt consumer",
+    "total fee", "case id", "arbitrator name",
+  ];
+  it("finds the AAA Nonconsumer column, not Claim Amt Business or Arbitrator Name", () => {
+    expect(findColumn(aaaHeader, RESPONDENT_COLUMNS)).toBe(0);
+    expect(findColumn(aaaHeader, CASE_ID_COLUMNS)).toBe(13);
+    expect(findColumn(aaaHeader, FILING_DATE_COLUMNS)).toBe(7);
+  });
+  it("parses AAA DD-MON-YY filing dates", () => {
+    expect(parseArbDate("02-JUN-21")).toBe(Math.floor(Date.UTC(2021, 5, 2) / 1000));
+    expect(parseArbDate("20-NOV-19")).toBe(Math.floor(Date.UTC(2019, 10, 20) / 1000));
+    expect(parseArbDate("2024-03-05")).toBe(Math.floor(Date.UTC(2024, 2, 5) / 1000));
+    expect(parseArbDate("")).toBe(null);
+    expect(parseArbDate("not a date")).toBe(null);
   });
 });
 

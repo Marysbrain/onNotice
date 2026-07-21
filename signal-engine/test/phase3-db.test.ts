@@ -26,7 +26,9 @@ describe("no-author-fields guardrail (the one that matters)", () => {
     const rows = await env.DB.prepare(
       "SELECT dedupe_key, source_url, excerpt, carrier FROM records WHERE source_id = 'bluesky'"
     ).all<{ dedupe_key: string; source_url: string; excerpt: string; carrier: string | null }>();
-    expect(rows.results!.length).toBe(2);
+    // The fixture's off-topic post ("unrelated chatter about the weather") is
+    // dropped by the taxonomy gate; only the carrier post becomes a record.
+    expect(rows.results!.length).toBe(1);
 
     const blob = JSON.stringify(rows.results);
     // Author identity from the fixture must appear nowhere in stored fields.

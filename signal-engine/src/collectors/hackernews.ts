@@ -1,6 +1,6 @@
 import type { Env } from "../env.js";
 import { enabledSources, insertRecord, touchSource } from "../db/records.js";
-import { matchCarrier, searchPhrases } from "../lib/taxonomy.js";
+import { matchCarrier, hasTaxonomyMatch, searchPhrases } from "../lib/taxonomy.js";
 import type { FetchImpl } from "../lib/http.js";
 
 // Hacker News via the Algolia search API. Once daily per phrase bundle, stories
@@ -80,13 +80,19 @@ export async function collectHackerNews(
     try {
       for (const phrase of phrases) {
         if (added >= MAX_RECORDS_PER_RUN) break;
-        const url = `${SEARCH}?query=${encodeURIComponent(phrase)}&tags=(story,comment)&hitsPerPage=${PER_PHRASE}`;
+        // advancedSyntax makes the quoted phrase an exact-phrase match instead
+        // of loose token matching, which returned unrelated posts (seen live).
+        const url = `${SEARCH}?query=${encodeURIComponent(`"${phrase}"`)}&tags=(story,comment)&hitsPerPage=${PER_PHRASE}&advancedSyntax=true`;
         const res = await doFetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
         if (!res.ok) continue;
         const items = parseHnSearch(await res.json());
         for (const item of items) {
           if (added >= MAX_RECORDS_PER_RUN) break;
           if (!item.text) continue;
+          // Registry rule: filter down to promo-credit topics before anything
+          // becomes a record. A post with neither a carrier nor an issue term
+          // is not a lead, whatever the search engine thought.
+          if (!hasTaxonomyMatch(item.text)) continue;
           const inserted = await insertRecord(env, {
             dedupeKey: `hn:${item.objectID}`,
             sourceId: src.id,

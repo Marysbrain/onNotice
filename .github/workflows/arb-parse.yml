@@ -1,0 +1,46 @@
+# Parses the quarterly AAA/JAMS arbitration xlsx files that the Worker defers
+# (a full xlsx parse does not fit the Workers free CPU budget). Weekly schedule
+# is cheap insurance; the parse is a no-op unless a new quarterly file landed.
+#
+# Required repo secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+# D1_DATABASE_ID (see signal-engine/scripts/parse-latest.mjs).
+name: arb-parse
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_url:
+        description: Direct xlsx URL to parse (blank = latest deferred job from D1)
+        required: false
+      provider:
+        description: aaa or jams (used with file_url)
+        required: false
+        default: aaa
+  schedule:
+    - cron: "17 6 * * 1"
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install exceljs
+        working-directory: signal-engine
+        run: npm install --no-save exceljs
+      - name: Parse arbitration files
+        working-directory: signal-engine
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          FILE_URL: ${{ inputs.file_url }}
+          PROVIDER: ${{ inputs.provider }}
+        run: |
+          if [ -n "$FILE_URL" ]; then
+            node scripts/parse-xlsx.mjs "$FILE_URL" "${PROVIDER:-aaa}"
+          else
+            node scripts/parse-latest.mjs
+          fi

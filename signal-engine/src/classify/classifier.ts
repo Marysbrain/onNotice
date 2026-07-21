@@ -24,7 +24,11 @@ export interface Classifier {
 }
 
 const VALID_CARRIERS = () => carrierList().map((c) => c.id);
-const CF_MODEL_DEFAULT = "@cf/meta/llama-3.2-1b-instruct";
+// 8B is the smallest Workers AI free-tier model that reliably returns the JSON
+// shape. The 1B model echoed input or broke JSON on most real records
+// (validated live 2026-07-21); everything it broke routed to review, so the
+// fail-safe held, but the queue fills with work a better model handles.
+const CF_MODEL_DEFAULT = "@cf/meta/llama-3.1-8b-instruct";
 
 // Build a compact instruction. We ask for strict JSON so parsing stays cheap.
 function buildPrompt(input: ClassifyInput): string {
@@ -136,7 +140,8 @@ export class StubClassifier implements Classifier {
 }
 
 // Pick the classifier. Default is Workers AI. Switch to Haiku only when config
-// CLASSIFIER=haiku and the account/gateway ids are set.
+// CLASSIFIER=haiku and the account/gateway ids are set. Config AI_MODEL swaps
+// the Workers AI model without a deploy.
 export async function selectClassifier(env: Env): Promise<Classifier> {
   const choice = await getConfigString(env, "CLASSIFIER", "workers_ai");
   if (choice === "haiku") {
@@ -144,5 +149,6 @@ export async function selectClassifier(env: Env): Promise<Classifier> {
     const gatewayId = await getConfigString(env, "AI_GATEWAY_ID", "");
     if (accountId && gatewayId) return new HaikuClassifier(env, accountId, gatewayId);
   }
-  return new WorkersAiClassifier(env);
+  const model = await getConfigString(env, "AI_MODEL", CF_MODEL_DEFAULT);
+  return new WorkersAiClassifier(env, model);
 }

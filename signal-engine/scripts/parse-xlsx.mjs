@@ -30,10 +30,17 @@ const require = createRequire(import.meta.url);
 // Load taxonomy so carrier matching stays identical to the Worker.
 const taxonomy = require("../taxonomy.json");
 
+// Word-boundary matching, identical in behavior to src/lib/taxonomy.ts.
+// Substring matching misattributes ("Metropolitan" is not "Metro").
+function termRegex(term) {
+  const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`);
+}
+
 function matchArbRespondent(company) {
   const hay = String(company).toLowerCase();
   for (const c of taxonomy.carriers) {
-    if (c.arb_respondent_patterns.some((p) => hay.includes(p.toLowerCase()))) return c.id;
+    if (c.arb_respondent_patterns.some((p) => termRegex(p).test(hay))) return c.id;
   }
   return null;
 }
@@ -67,7 +74,30 @@ function findColumn(header, wants) {
   return -1;
 }
 
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+// AAA writes dates as DD-MON-YY ("02-JUN-21"). exceljs may also hand us a Date
+// for date-typed cells. Returns epoch seconds or null.
+function parseArbDate(v) {
+  if (v instanceof Date) return Math.floor(v.getTime() / 1000);
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  const m = t.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+  if (m) {
+    const mon = MONTHS[m[2].toLowerCase()];
+    if (mon === undefined) return null;
+    const yy = Number(m[3]);
+    const year = m[3].length === 2 ? 2000 + yy : yy;
+    return Math.floor(Date.UTC(year, mon, Number(m[1])) / 1000);
+  }
+  const parsed = Date.parse(t);
+  return Number.isNaN(parsed) ? null : Math.floor(parsed / 1000);
+}
+
 async function d1Query(sql, params) {
+  // DRY_RUN=1 parses and counts without touching D1. For validating a new
+  // quarterly file's shape before wiring credentials.
+  if (process.env.DRY_RUN) return null;
   const { CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, D1_DATABASE_ID } = process.env;
   if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !D1_DATABASE_ID) {
     throw new Error("Missing CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID / D1_DATABASE_ID");
@@ -103,11 +133,16 @@ async function main() {
     return;
   }
   const header = rows[0].map((h) => String(h ?? ""));
-  const respIdx = findColumn(header, ["respondent", "business", "non-consumer", "company", "name"]);
+  // AAA's business-party column is "Nonconsumer" (confirmed against the Q1 2026
+  // file). Bare "business"/"name" collide with "Claim Amt Business" and
+  // "Arbitrator Name", so they are never used as aliases.
+  const respIdx = findColumn(header, ["nonconsumer", "non-consumer", "respondent", "company"]);
   if (respIdx < 0) {
     console.error("no respondent-like column found. Headers:", header);
     process.exit(3);
   }
+  const caseIdx = findColumn(header, ["case id", "case number", "case no", "reference no"]);
+  const filedIdx = findColumn(header, ["filing date", "date filed", "file date"]);
 
   let created = 0;
   for (let i = 1; i < rows.length; i++) {
@@ -116,13 +151,17 @@ async function main() {
     const carrier = matchArbRespondent(company);
     if (!carrier) continue;
 
+    // Cumulative quarterly files repeat cases; dedupe on the provider case id.
+    const caseId = caseIdx >= 0 ? String(rows[i][caseIdx] ?? "").trim() : "";
+    const dedupeKey = caseId ? `arb:${provider}:${caseId}` : `arb:${provider}:${fileId}:${i}`;
+    const recordDate = filedIdx >= 0 ? parseArbDate(rows[i][filedIdx]) : null;
+
     const excerpt = `${company} | ${header.map((h, k) => `${h}=${rows[i][k] ?? ""}`).join("; ")}`.slice(0, 500);
-    const dedupeKey = `arb:${provider}:${fileId}:${i}`;
     await d1Query(
       `INSERT OR IGNORE INTO records
-        (dedupe_key, source_id, source_url, capture_date, excerpt, carrier, vetting_status, raw_ref)
-       VALUES (?, ?, ?, ?, ?, ?, 'verified_primary', ?)`,
-      [dedupeKey, `${provider}_arb`, src, capture, excerpt, carrier, fileId]
+        (dedupe_key, source_id, source_url, capture_date, record_date, excerpt, carrier, vetting_status, raw_ref)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'verified_primary', ?)`,
+      [dedupeKey, `${provider}_arb`, src, capture, recordDate, excerpt, carrier, fileId]
     );
     created++;
   }
