@@ -3,14 +3,32 @@ import Base from "../layouts/Base.astro";
 import CopyBlock from "../components/CopyBlock.astro";
 import { buildChoropleth, fillFor, WIDTH, HEIGHT, BIN_VARS } from "../lib/geo";
 import { records } from "../data/records";
+import hotspotsData from "../../public/aggregates/hotspots.json";
 
 const model = buildChoropleth();
 
-// Flames on the top concentrations only, sized by intensity. Real SVG nodes so
-// they are keyboard reachable and clickable.
-const withData = model.states.filter((s) => s.count > 0);
-const topFlames = [...withData].sort((a, b) => b.count - a.count).slice(0, 6);
-const maxCount = model.maxCount;
+// Flames come from the published hotspots.json: ranked states with a 0..1
+// intensity and a plain-language basis string. Real SVG nodes so they are
+// keyboard reachable and clickable.
+const byAbbr = new Map(model.states.map((s) => [s.abbr, s]));
+const topFlames = hotspotsData.hotspots
+  .map((h) => {
+    const s = byAbbr.get(h.state);
+    return s ? { ...s, intensity: h.intensity, basis: h.basis } : null;
+  })
+  .filter((f) => f !== null);
+
+function monthLabel(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(Date.UTC(y!, (m ?? 1) - 1, 1)).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+const coverageNote = model.coverage
+  ? `${monthLabel(model.coverage.from)} through ${monthLabel(model.coverage.to)}`
+  : null;
 
 // Data embedded for the island: records for the panel, plus state lookups.
 const mapDataForClient = {
@@ -34,22 +52,23 @@ const carriers = [
 ];
 const years = ["2014", "2026"];
 
-// A flame path scaled by intensity.
-function flameSize(count: number): number {
-  return 10 + Math.round((count / maxCount) * 16); // 10..26 px
+// A flame path scaled by the published 0..1 intensity.
+function flameSize(intensity: number): number {
+  return 10 + Math.round(intensity * 16); // 10..26 px
 }
 ---
 
 <Base
   title="Map"
-  description="A state level map of wireless billing complaint concentration, all carriers, from the FCC layer. Sample data until launch."
+  description="A state level map of wireless billing complaint concentration, all carriers, from the FCC layer."
 >
   <div class="wrap">
     <h1>The map</h1>
     <div class="notice">
       <p>
-        <span class="sample-badge">SAMPLE</span> The data on this map is sample
-        data until launch. The numbers are modest placeholders, not real counts.
+        {coverageNote
+          ? `This layer shows real FCC complaint counts covering ${coverageNote}. The history backfill is still walking toward the present, so this range grows. Methodology explains how it is counted.`
+          : "The FCC complaint layer has no data loaded yet."}
       </p>
     </div>
 
@@ -91,8 +110,9 @@ function flameSize(count: number): number {
 
       <p class="hint">
         Carrier and Year filter the sourced records shown in the panel. They do
-        not change the FCC complaint color layer, which has no carrier or time
-        breakdown in this sample.
+        not change the FCC complaint color layer, which carries no carrier
+        field at all. Panel records are still sample entries until the evidence
+        library goes live. <span class="sample-badge">SAMPLE</span>
       </p>
 
       <div class="legend" aria-hidden="false">
@@ -107,7 +127,7 @@ function flameSize(count: number): number {
         }
         <span
           ><span class="swatch" style="background:var(--surface)"></span> no
-          sample data</span
+          data</span
         >
       </div>
 
@@ -117,7 +137,7 @@ function flameSize(count: number): number {
             class="us-map"
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             role="group"
-            aria-label="United States choropleth of wireless billing complaint concentration, all carriers. Sample data. A data table with the same values follows below the map."
+            aria-label="United States choropleth of wireless billing complaint concentration, all carriers, from the FCC complaint dataset. A data table with the same values follows below the map."
           >
             <g id="state-layer">
               {
@@ -130,7 +150,7 @@ function flameSize(count: number): number {
                     tabindex="0"
                     role="button"
                     aria-pressed="false"
-                    aria-label={`${s.name}. ${s.count} complaints. Sample data. Press Enter to open records.`}
+                    aria-label={`${s.name}. ${s.count.toLocaleString("en-US")} FCC complaints in the covered period. Press Enter to open records.`}
                     fill={fillFor(s.bin)}
                   />
                 ))
@@ -139,17 +159,17 @@ function flameSize(count: number): number {
             <g id="flame-layer">
               {
                 topFlames.map((s) => {
-                  const size = flameSize(s.count);
+                  const size = flameSize(s.intensity);
                   return (
                     <g
                       class="flame"
                       data-abbr={s.abbr}
                       tabindex="0"
                       role="button"
-                      aria-label={`Hot spot: ${s.name}, ${s.count} complaints. Sample data. Press Enter to open records.`}
+                      aria-label={`Hot spot: ${s.name}. ${s.basis}. Press Enter to open records.`}
                       transform={`translate(${s.cx}, ${s.cy})`}
                     >
-                      <title>{`${s.name}: ${s.count} (sample)`}</title>
+                      <title>{`${s.name}: ${s.basis}`}</title>
                       <path
                         d="M0 -1 C 0.5 -0.4, -0.4 -0.2, -0.15 0.25 C -0.28 0.15, -0.3 0.4, -0.15 0.55 C 0 0.75, 0.35 0.6, 0.35 0.25 C 0.35 -0.1, 0 -0.2, 0 -1 Z"
                         transform={`scale(${size})`}
@@ -182,19 +202,19 @@ function flameSize(count: number): number {
     <h2 id="data-table">Data table</h2>
     <p class="prose">
       This table mirrors the map. It is the screen reader path and it works with
-      no color vision at all. <span class="sample-badge">SAMPLE</span>
+      no color vision at all.
     </p>
     <div class="table-scroll">
       <table class="data-table">
         <caption>
           Wireless billing complaint concentration by state, all carriers. FCC
-          layer. Sample data.
+          layer{coverageNote ? `, covering ${coverageNote}` : ""}.
         </caption>
         <thead>
           <tr>
             <th scope="col">State</th>
             <th scope="col">USPS</th>
-            <th scope="col">Complaints (sample)</th>
+            <th scope="col">Complaints</th>
             <th scope="col">Concentration band</th>
           </tr>
         </thead>
@@ -207,7 +227,7 @@ function flameSize(count: number): number {
                 <tr>
                   <td>{s.name}</td>
                   <td>{s.abbr}</td>
-                  <td>{s.count}</td>
+                  <td>{s.count.toLocaleString("en-US")}</td>
                   <td>
                     {s.bin < 0
                       ? "no data"
@@ -228,7 +248,7 @@ function flameSize(count: number): number {
     </p>
     <CopyBlock
       id="map-share"
-      text="Wireless billing complaints cluster in some states more than others. See the map (sample data until launch) on Carriers On Notice."
+      text="Wireless billing complaints cluster in some states more than others. See the FCC complaint map on Carriers On Notice."
       link="https://carriersonnotice.com/map"
     />
   </div>

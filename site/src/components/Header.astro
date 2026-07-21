@@ -17,10 +17,9 @@ const nav = [
 <header class="site-header">
   <div class="wrap bar">
     <a class="brand" href="/">Carriers On Notice</a>
-    <span class="count-pill" title="Verified records. Sample data until launch.">
+    <span class="count-pill" title="Corroborated plus verified primary records. See methodology.">
       <strong>{verified.toLocaleString("en-US")}</strong>
       <span>verified records</span>
-      <span class="sample-badge">SAMPLE</span>
     </span>
     <nav class="site-nav" aria-label="Primary">
       {nav.map((n) => <a href={n.href}>{n.label}</a>)}

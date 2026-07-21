@@ -1,6 +1,6 @@
 import type { Env } from "../env.js";
 import { getCarrierMentionsMonthly } from "../db/aggregates.js";
-import { sumByState, sumByZip, monthlyTrendByState } from "../db/fcc.js";
+import { sumByState, sumByZip, monthlyTrendByState, monthRange } from "../db/fcc.js";
 import { computeHotspots } from "./hotspots.js";
 import { getCursor, setCursor } from "../lib/config.js";
 import { blueskyPermalink } from "../collectors/bluesky.js";
@@ -43,6 +43,9 @@ function publicSourceUrl(sourceId: string | null, sourceUrl: string): string {
 export interface MapAggregate {
   generated_at: number;
   source: string;
+  // The month span the counts cover, so the site can label a partial backfill
+  // honestly. Null until the first FCC aggregate lands.
+  coverage: { from: string; to: string } | null;
   byState: Array<{ state: string; count: number }>;
   byZip: Array<{ zip: string; count: number }>;
 }
@@ -60,6 +63,7 @@ export async function buildMap(env: Env): Promise<MapAggregate> {
   return {
     generated_at: Math.floor(Date.now() / 1000),
     source: "fcc_monthly_aggregates",
+    coverage: await monthRange(env),
     byState: await sumByState(env),
     byZip: await sumByZip(env, 1000),
   };

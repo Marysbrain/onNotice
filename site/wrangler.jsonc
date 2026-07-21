@@ -1,0 +1,18 @@
+{
+  // Public site, deployed as Cloudflare Workers static assets in the CON
+  // account. Deploy: source ~/.con-cloudflare.env && npx wrangler deploy
+  // (run scripts/fetch-aggregates.mjs and npm run build first so the baked
+  // numbers are current). Custom domain wiring is a launch-day step.
+  "name": "con-site",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // Without this the asset layer answers directly and worker.js never runs,
+    // so the staging noindex header would silently vanish.
+    "run_worker_first": true
+  }
+}

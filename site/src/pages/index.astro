@@ -11,10 +11,12 @@ const verified = totals.verified;
   <div class="wrap">
     <div class="notice">
       <p>
-        <span class="sample-badge">SAMPLE</span> The data shown across this site
-        is sample data until launch. Numbers are modest placeholders, not real
-        counts. Real numbers will replace them at launch, with methodology
-        public.
+        The counts on this site are real. They come from public primary
+        sources, mostly official consumer arbitration files that name the
+        company, and the <a href="/methodology">methodology</a> shows exactly
+        how each number is made. The evidence library pages still show sample
+        records while we wire them to the live data; those keep a SAMPLE badge
+        until then.
       </p>
     </div>
 
@@ -22,7 +24,6 @@ const verified = totals.verified;
 
     <p class="count-pill" style="font-size:1.1rem;">
       <strong>{verified.toLocaleString("en-US")}</strong>&nbsp;verified records
-      <span class="sample-badge">SAMPLE</span>
     </p>
 
     <div class="prose">
@@ -66,9 +67,7 @@ const verified = totals.verified;
     <p class="prose">
       Wireless billing complaint concentration by state, all carriers, from the
       FCC layer. This preview does not move. The full map, with filters, hot
-      spots, and drill down, is one click away. <span class="sample-badge"
-        >SAMPLE</span
-      >
+      spots, and drill down, is one click away.
     </p>
 
     <a
@@ -80,7 +79,7 @@ const verified = totals.verified;
         class="us-map-preview"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label="Static preview of the US complaint concentration map. Sample data. Open the map page for the full data table and interactive version."
+        aria-label="Static preview of the US complaint concentration map from the FCC complaint dataset. Open the map page for the full data table and interactive version."
       >
         {
           model.states.map((s) => (

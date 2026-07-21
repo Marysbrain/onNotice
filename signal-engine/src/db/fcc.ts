@@ -50,6 +50,15 @@ export async function sumByZip(env: Env, limit = 1000): Promise<Array<{ zip: str
   return res.results ?? [];
 }
 
+// The month span the aggregates actually cover. The backfill walks history in
+// chunks, so the public map must say which period its counts represent.
+export async function monthRange(env: Env): Promise<{ from: string; to: string } | null> {
+  const res = await env.DB.prepare(
+    `SELECT MIN(month) AS mn, MAX(month) AS mx FROM fcc_monthly_aggregates`
+  ).first<{ mn: string | null; mx: string | null }>();
+  return res?.mn && res?.mx ? { from: res.mn, to: res.mx } : null;
+}
+
 export async function monthlyTrendByState(env: Env, state: string): Promise<Array<{ month: string; count: number }>> {
   const res = await env.DB.prepare(
     `SELECT month, SUM(count) AS count FROM fcc_monthly_aggregates

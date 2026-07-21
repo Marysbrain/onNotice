@@ -55,6 +55,9 @@ export interface ChoroplethModel {
   thresholds: number[]; // upper bounds of bins 0..3
   maxCount: number;
   generatedAt: number;
+  // Month span the FCC counts cover ("YYYY-MM"). The backfill walks toward the
+  // present, so the site labels this range instead of implying completeness.
+  coverage: { from: string; to: string } | null;
 }
 
 function binFor(count: number, thresholds: number[]): number {
@@ -107,11 +110,14 @@ export function buildChoropleth(): ChoroplethModel {
 
   states.sort((a, b) => a.name.localeCompare(b.name));
 
+  const coverage = (mapData as { coverage?: { from: string; to: string } | null }).coverage ?? null;
+
   return {
     states,
     thresholds,
     maxCount,
     generatedAt: mapData.generated_at,
+    coverage,
   };
 }
 
