@@ -17,7 +17,9 @@ const desc =
   description ??
   "A public evidence project on US wireless carrier device promotions. Documented facts with sources, clearly separated from commentary.";
 // Placeholder Open Graph image. Real per page OG images are a deploy day item.
-const ogImage = new URL("/og/placeholder.svg", Astro.site).href;
+// 1200x630 PNG rendered from scripts/og-card.svg (sips -s format png).
+// PNG, not SVG: most share crawlers will not rasterize SVG og images.
+const ogImage = new URL("/og/og-default.png", Astro.site).href;
 ---
 
 <!doctype html>

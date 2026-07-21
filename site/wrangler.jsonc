@@ -6,6 +6,17 @@
   "name": "con-site",
   "main": "worker.js",
   "compatibility_date": "2026-07-01",
+  "routes": [
+    { "pattern": "carriersonnotice.com", "custom_domain": true },
+    { "pattern": "www.carriersonnotice.com", "custom_domain": true }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "signal_engine",
+      "database_id": "5d06e4be-c718-4b5a-a242-aaefa23e14c7"
+    }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

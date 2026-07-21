@@ -1,10 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
 
-// Turnstile site key comes from a public env var. In phase 1 we render a
-// placeholder only. The real Cloudflare Turnstile widget script is added at
-// deploy. We never ship a tracking script here.
+// Turnstile site key comes from a public env var at build. With a key, the
+// form is live: real widget, enabled submit. Without one, the form stays in
+// its pre-launch placeholder state. We never ship a tracking script here;
+// Turnstile is a bot check, not analytics.
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+const formLive = Boolean(turnstileSiteKey);
 ---
 
 <Base
@@ -14,13 +16,20 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
   <div class="wrap prose" data-pagefind-body>
     <h1>Tell your story</h1>
 
-    <div class="notice">
-      <p>
-        <strong>Submissions open at launch.</strong> This form is not live yet.
-        The consent notice and the fields below are the real ones. When we
-        launch, the form will post to a protected endpoint and a person will
-        review every story.
-      </p>
+    {
+      !formLive && (
+        <div class="notice">
+          <p>
+            <strong>Submissions open soon.</strong> This form is not live yet.
+            The consent notice and the fields below are the real ones. Once
+            submissions open, the form posts to a protected endpoint and a
+            person reviews every story.
+          </p>
+        </div>
+      )
+    }
+    <div class="notice" id="form-status" hidden>
+      <p id="form-status-text"></p>
     </div>
 
     <h2>Read this before you submit</h2>
@@ -142,23 +151,60 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
       <div class="field">
         <p class="hint">Human check</p>
-        <div
-          class="turnstile-placeholder"
-          data-sitekey={turnstileSiteKey || "set-PUBLIC_TURNSTILE_SITE_KEY-at-deploy"}
-        >
-          Cloudflare Turnstile appears here at launch. It checks that a real
-          person is submitting. It is not a tracking cookie.
-        </div>
+        {
+          formLive ? (
+            <div class="cf-turnstile" data-sitekey={turnstileSiteKey} />
+          ) : (
+            <div class="turnstile-placeholder">
+              Cloudflare Turnstile appears here when submissions open. It
+              checks that a real person is submitting. It is not a tracking
+              cookie.
+            </div>
+          )
+        }
       </div>
 
-      <button type="submit" class="btn" disabled aria-disabled="true">
-        Submit (opens at launch)
-      </button>
-      <p class="hint">
-        The submit button is off in phase 1. There is no live endpoint yet, so
-        nothing is sent.
-      </p>
+      {
+        formLive ? (
+          <button type="submit" class="btn">Submit my story</button>
+        ) : (
+          <button type="submit" class="btn" disabled aria-disabled="true">
+            Submit (opens soon)
+          </button>
+        )
+      }
+      {
+        !formLive && (
+          <p class="hint">
+            The submit button is off until submissions open. Nothing is sent.
+          </p>
+        )
+      }
     </form>
+
+    {formLive && <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>}
+
+    <script is:inline>
+      // Show the outcome message the submit endpoint redirects back with.
+      // Static site, so this tiny reader is the whole mechanism.
+      (function () {
+        var messages = {
+          "human-check": "The human check did not pass. Please try again.",
+          consent: "Please read and check the consent box before submitting.",
+          "too-short": "Please tell us a bit more. A few sentences is plenty.",
+          closed: "Submissions are not open yet. Nothing was sent.",
+        };
+        var status = new URLSearchParams(location.search).get("status");
+        if (status && messages[status]) {
+          var box = document.getElementById("form-status");
+          var text = document.getElementById("form-status-text");
+          if (box && text) {
+            text.textContent = messages[status];
+            box.hidden = false;
+          }
+        }
+      })();
+    </script>
 
     <h2>After a story is verified</h2>
     <p>
