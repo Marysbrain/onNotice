@@ -20,11 +20,19 @@ export function normalizeText(html: string): string {
     .replace(/&#39;/g, "'");
   // Drop cache-busting tokens and long digit runs that change every load.
   const cleaned = text.replace(/[?&](cb|t|_|v|nocache)=[^\s"']+/gi, " ");
-  return cleaned
+  const lines = cleaned
     .split("\n")
     .map((l) => l.replace(/\s+/g, " ").trim())
-    .filter((l) => l.length > 0)
-    .join("\n");
+    .filter((l) => l.length > 0);
+  // Collapse consecutive duplicate lines. AT&T's trade-in page alternates
+  // between rendering its text once and twice per load, which flip-flopped the
+  // hash and produced a snapshot of identical content every day. The raw HTML
+  // in R2 keeps whatever the page actually served.
+  const out: string[] = [];
+  for (const l of lines) {
+    if (out[out.length - 1] !== l) out.push(l);
+  }
+  return out.join("\n");
 }
 
 const MAX_LCS_CELLS = 500_000;
