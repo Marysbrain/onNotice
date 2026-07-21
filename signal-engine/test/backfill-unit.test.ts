@@ -26,11 +26,11 @@ describe("FCC SoQL query", () => {
   it("uses date_trunc_ym, groups, and filters the month window", () => {
     // URLSearchParams encodes spaces as '+', which decodeURIComponent keeps.
     const decoded = decodeURIComponent(buildFccAggQuery("https://x/y.json", "state", "2015-03-01T00:00:00.000", "2015-04-01T00:00:00.000", 100)).replace(/\+/g, " ");
-    expect(decoded).toContain("date_trunc_ym(ticket_created)");
+    expect(decoded).toContain("date_trunc_ym(to_floating_timestamp(ticket_created,'UTC'))");
     expect(decoded).toContain("issue_type='Phone'");
     expect(decoded).toContain("ticket_created >= '2015-03-01T00:00:00.000'");
     expect(decoded).toContain("ticket_created < '2015-04-01T00:00:00.000'");
-    expect(decoded).toContain("$group=state, date_trunc_ym(ticket_created)");
+    expect(decoded).toContain("$group=state, date_trunc_ym(to_floating_timestamp(ticket_created,'UTC'))");
   });
 });
 

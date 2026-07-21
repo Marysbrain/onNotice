@@ -9,8 +9,10 @@ import { insertFccMonthly, type FccAggRow } from "../db/fcc.js";
 // group-by queries and store them in fcc_monthly_aggregates. One month per run,
 // re-enqueued until it reaches the present month.
 //
-// date_trunc_ym is a documented SoQL function (verified against dev.socrata.com
-// on 2026-07-20): it truncates a floating timestamp to the first of the month.
+// date_trunc_ym only accepts floating timestamps, and this dataset's
+// ticket_created is a fixed_timestamp (confirmed against the live API on
+// 2026-07-21: the bare call returns query.soql.type-mismatch). So we wrap it
+// in to_floating_timestamp(ticket_created, 'UTC') before truncating.
 
 const EARLIEST_DEFAULT = "2014-11";
 const ZIP_LIMIT = 500; // top zips per month; the hot ones are what the map needs
@@ -25,9 +27,9 @@ export function buildFccAggQuery(
   limit: number
 ): string {
   const params = new URLSearchParams({
-    $select: `${dimension}, date_trunc_ym(ticket_created) AS month, count(*) AS count`,
+    $select: `${dimension}, date_trunc_ym(to_floating_timestamp(ticket_created,'UTC')) AS month, count(*) AS count`,
     $where: `issue_type='Phone' AND ticket_created >= '${monthStart}' AND ticket_created < '${monthEnd}' AND ${dimension} IS NOT NULL`,
-    $group: `${dimension}, date_trunc_ym(ticket_created)`,
+    $group: `${dimension}, date_trunc_ym(to_floating_timestamp(ticket_created,'UTC'))`,
     $order: "count DESC",
     $limit: String(limit),
   });
