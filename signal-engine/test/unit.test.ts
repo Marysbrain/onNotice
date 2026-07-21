@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseFeed, buildExcerpt } from "../src/lib/rss.js";
 import { normalizeText, unifiedDiff } from "../src/lib/diff.js";
 import { parseCsv } from "../src/processors/parse-file.js";
-import { matchCarrier, matchArbRespondent } from "../src/lib/taxonomy.js";
+import { matchCarrier, matchArbRespondent, isTelecomRelevant } from "../src/lib/taxonomy.js";
 import ftcFeed from "./fixtures/ftc-feed.xml?raw";
 
 describe("rss parse", () => {
@@ -21,6 +21,14 @@ describe("rss parse", () => {
     const ex = buildExcerpt(items[0]!);
     expect(ex.startsWith(items[0]!.title)).toBe(true);
     expect(ex).toContain("trade-in credit");
+  });
+
+  it("strips tags that arrive HTML-encoded, the live FTC feed shape", () => {
+    const xml = `<rss><channel><item><title>Test</title><link>https://x</link><description>&lt;p&gt;The Commission &lt;a href="https://www.ftc.gov/x"&gt;announced&lt;/a&gt; an action.&lt;/p&gt;</description></item></channel></rss>`;
+    const items = parseFeed(xml);
+    expect(items[0]!.description).toBe("The Commission announced an action.");
+    expect(items[0]!.description).not.toContain("<p>");
+    expect(items[0]!.description).not.toContain("href");
   });
 });
 
@@ -70,5 +78,29 @@ describe("taxonomy matching", () => {
     expect(matchArbRespondent("AT&T Mobility LLC")).toBe("att");
     expect(matchArbRespondent("Cellco Partnership d/b/a Verizon Wireless")).toBe("verizon");
     expect(matchArbRespondent("Acme Widgets Inc")).toBe(null);
+  });
+
+  it("requires word boundaries, not raw substrings", () => {
+    // Production false positive: "against Mobilewalla" contains "t mobile".
+    expect(matchCarrier("FTC Takes Action Against Mobilewalla for Selling Location Data")).toBe(null);
+    expect(matchCarrier("the metropolitan area")).toBe(null);
+    expect(matchCarrier("a clearly visible defect")).toBe(null);
+    expect(matchCarrier("cricket match results")).toBe(null);
+    expect(matchArbRespondent("Metropolitan Life Insurance")).toBe(null);
+  });
+
+  it("gates telecom relevance on whole words", () => {
+    expect(isTelecomRelevant("FTC Takes Action Against Mobilewalla")).toBe(false);
+    expect(isTelecomRelevant("FTC Fines Wireless Carrier Over Billing")).toBe(true);
+    expect(isTelecomRelevant("Order covers mobile broadband providers")).toBe(true);
+    expect(isTelecomRelevant("Mortgage relief scheme returns funds")).toBe(false);
+  });
+
+  it("still matches real carrier mentions at boundaries", () => {
+    expect(matchCarrier("Switching to T Mobile next month")).toBe("tmobile");
+    expect(matchCarrier("AT&T's trade-in fine print")).toBe("att");
+    expect(matchCarrier("Visible by Verizon promo")).toBe("verizon");
+    expect(matchCarrier("Metro by T-Mobile store")).toBe("tmobile");
+    expect(matchArbRespondent("Cricket Wireless, LLC")).toBe("att");
   });
 });

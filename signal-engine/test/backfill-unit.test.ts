@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { addMonths, currentMonth, monthStartISO, monthEndISO } from "../src/lib/months.js";
 import { buildFccAggQuery } from "../src/backfill/fcc-aggregate-backfill.js";
-import { buildCourtListenerUrl, parseCourtListener, courtlistenerQueries } from "../src/backfill/courtlistener-backfill.js";
+import { buildCourtListenerUrl, parseCourtListener, parseNextUrl, courtlistenerQueries } from "../src/backfill/courtlistener-backfill.js";
 import { buildFtcListUrl, parseFtcListing } from "../src/backfill/ftc-backfill.js";
 import { parseCdx, timestampToEpoch, buildSnapshotDiffs, snapshotUrl } from "../src/backfill/wayback-backfill.js";
 import { rankHotspots } from "../src/publish/hotspots.js";
@@ -41,18 +41,42 @@ describe("CourtListener", () => {
     expect(qs.some((q) => q.includes("AT&T"))).toBe(true);
   });
   it("builds a search url with type=r", () => {
-    expect(buildCourtListenerUrl("https://cl/api", '"AT&T" "bill credits"', 2)).toContain("type=r");
+    expect(buildCourtListenerUrl("https://cl/api", '"AT&T" "bill credits"')).toContain("type=r");
   });
-  it("parses dockets and resolves relative urls", () => {
+  it("parses v4 docket rows via docket_absolute_url", () => {
+    // Live v4 shape: absolute_url lives on nested recap_documents, not the row.
     const items = parseCourtListener({
       results: [
-        { caseName: "Doe v. AT&T Mobility", court: "cacd", dateFiled: "2021-05-01", docketNumber: "2:21-cv-1", absolute_url: "/docket/1/doe-v-att/" },
+        {
+          caseName: "SULLIVAN v. US CELLULAR",
+          court: "District Court, D. Maine",
+          dateFiled: "2026-01-16",
+          docketNumber: "1:26-cv-00028",
+          docket_absolute_url: "/docket/72162640/sullivan-v-us-cellular/",
+          recap_documents: [{ absolute_url: "/docket/72162640/1/1/sullivan-v-us-cellular/" }],
+        },
         { caseName: "No Url Case" },
       ],
     });
     expect(items.length).toBe(1);
+    expect(items[0]!.url).toBe("https://www.courtlistener.com/docket/72162640/sullivan-v-us-cellular/");
+    expect(items[0]!.docketNumber).toBe("1:26-cv-00028");
+  });
+  it("parses dockets via the absolute_url fallback", () => {
+    const items = parseCourtListener({
+      results: [
+        { caseName: "Doe v. AT&T Mobility", court: "cacd", dateFiled: "2021-05-01", docketNumber: "2:21-cv-1", absolute_url: "/docket/1/doe-v-att/" },
+      ],
+    });
+    expect(items.length).toBe(1);
     expect(items[0]!.url).toBe("https://www.courtlistener.com/docket/1/doe-v-att/");
-    expect(items[0]!.docketNumber).toBe("2:21-cv-1");
+  });
+  it("follows only courtlistener-hosted next cursors", () => {
+    expect(parseNextUrl({ next: "https://www.courtlistener.com/api/rest/v4/search/?cursor=abc" })).toBe(
+      "https://www.courtlistener.com/api/rest/v4/search/?cursor=abc"
+    );
+    expect(parseNextUrl({ next: "https://evil.example/steal" })).toBe(null);
+    expect(parseNextUrl({ next: null })).toBe(null);
   });
 });
 

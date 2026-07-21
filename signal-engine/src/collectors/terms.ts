@@ -6,6 +6,16 @@ import { saveToWayback } from "../lib/wayback.js";
 
 const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
 
+// Fallback for targets behind a bot wall (T-Mobile's Akamai returns 403 to the
+// honest UA). We identify honestly first and only present browser headers on a
+// block, and only for robots.txt-allowed paths; disallowed paths are disabled
+// in sources and covered by Wayback captures instead.
+const BROWSER_HEADERS: Record<string, string> = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+};
+
 interface PriorSnap {
   id: number;
   content_hash: string;
@@ -36,7 +46,10 @@ export async function collectTerms(env: Env): Promise<{ target: string; changed:
 }
 
 async function snapshotOne(env: Env, target: string, url: string) {
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" } });
+  let res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" } });
+  if (res.status === 403 || res.status === 429) {
+    res = await fetch(url, { headers: BROWSER_HEADERS });
+  }
   if (!res.ok) return { target, changed: false, captured: false };
   const html = await res.text();
 

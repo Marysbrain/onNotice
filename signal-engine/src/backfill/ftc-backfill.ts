@@ -2,7 +2,7 @@ import type { Env } from "../env.js";
 import type { FetchImpl } from "../lib/http.js";
 import { insertRecord } from "../db/records.js";
 import { getConfigString } from "../lib/config.js";
-import { matchCarrier, hasTaxonomyMatch } from "../lib/taxonomy.js";
+import { matchCarrier, isTelecomRelevant } from "../lib/taxonomy.js";
 
 // FTC press release history walker. Pages backward through the press-release
 // listing, one page per run, terminating at a configurable earliest date
@@ -17,7 +17,6 @@ import { matchCarrier, hasTaxonomyMatch } from "../lib/taxonomy.js";
 
 const BASE = "https://www.ftc.gov/news-events/news/press-releases";
 const EARLIEST_DEFAULT = "2015-01-01";
-const TELECOM = ["wireless", "telecom", "mobile", "carrier", "broadband", "cellular", "cell phone", "5g", "internet service"];
 
 export interface FtcItem {
   url: string;
@@ -87,8 +86,7 @@ export async function runFtcBackfill(
       reachedEarliest = true;
       continue;
     }
-    const isTelecom = hasTaxonomyMatch(item.title) || TELECOM.some((t) => item.title.toLowerCase().includes(t));
-    if (!isTelecom) continue;
+    if (!isTelecomRelevant(item.title)) continue;
 
     const recordDate = Math.floor(Date.UTC(item.year, item.month - 1, 1) / 1000);
     const ok = await insertRecord(env, {

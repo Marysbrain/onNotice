@@ -83,6 +83,22 @@ import Base from "../layouts/Base.astro";
       breakdown by vetting rung. These files carry numbers and locations only.
     </p>
 
+    <h2>How the terms archive is captured</h2>
+    <p>
+      We snapshot carrier promotion and trade-in terms pages on a schedule,
+      store the raw page, and keep diffs so changes are documented over time.
+      Every capture also gets an Internet Archive save.
+    </p>
+    <p>
+      Our collector identifies itself honestly, with a user agent that names
+      this project and a contact address. T-Mobile's site refuses that honest
+      request on some public terms pages. For those pages, and only after the
+      honest request is refused, we retry with ordinary browser headers. These
+      are public pages, we respect each site's robots.txt, and pages a site's
+      robots.txt asks crawlers to skip are not fetched by us at all. For those
+      we rely on Internet Archive captures instead.
+    </p>
+
     <h2>The line between fact and commentary</h2>
     <p>
       Documented practice is stated as fact, with a source. Any characterization

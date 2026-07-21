@@ -11,8 +11,14 @@ import { matchCarrier, searchPhrases, carrierList } from "../lib/taxonomy.js";
 // */5 runner cadence.
 //
 // Optional COURTLISTENER_TOKEN raises limits but the backfill works without it.
+//
+// v4 shape, confirmed against the live API 2026-07-21: docket rows carry
+// docket_absolute_url (absolute_url only exists on nested recap_documents),
+// and pagination is cursor-based via the response's `next` URL. Passing
+// page=N does not walk results.
 
 const BASE = "https://www.courtlistener.com/api/rest/v4/search/";
+const HOST = "https://www.courtlistener.com/";
 const DAILY_DEFAULT = 125;
 const CALLS_PER_RUN = 3;
 
@@ -27,8 +33,8 @@ export function courtlistenerQueries(): string[] {
   return out;
 }
 
-export function buildCourtListenerUrl(base: string, query: string, page: number): string {
-  const params = new URLSearchParams({ q: query, type: "r", order_by: "dateFiled desc", page: String(page) });
+export function buildCourtListenerUrl(base: string, query: string): string {
+  const params = new URLSearchParams({ q: query, type: "r", order_by: "dateFiled desc" });
   return `${base}?${params.toString()}`;
 }
 
@@ -46,11 +52,16 @@ export function parseCourtListener(json: unknown): DocketItem[] {
   const out: DocketItem[] = [];
   for (const r of results) {
     const row = r as Record<string, unknown>;
-    const abs = typeof row.absolute_url === "string" ? row.absolute_url : "";
+    const abs =
+      typeof row.docket_absolute_url === "string" && row.docket_absolute_url
+        ? row.docket_absolute_url
+        : typeof row.absolute_url === "string"
+          ? row.absolute_url
+          : "";
     const url = abs ? (abs.startsWith("http") ? abs : `https://www.courtlistener.com${abs}`) : "";
     if (!url) continue;
     out.push({
-      caseName: String(row.caseName ?? row.caseNameFull ?? ""),
+      caseName: String(row.caseName ?? row.case_name_full ?? ""),
       court: String(row.court ?? row.court_id ?? ""),
       dateFiled: String(row.dateFiled ?? ""),
       docketNumber: String(row.docketNumber ?? ""),
@@ -60,9 +71,15 @@ export function parseCourtListener(json: unknown): DocketItem[] {
   return out;
 }
 
+// The cursor-paginated continuation URL, only if it stays on courtlistener.com.
+export function parseNextUrl(json: unknown): string | null {
+  const n = (json as { next?: unknown })?.next;
+  return typeof n === "string" && n.startsWith(HOST) ? n : null;
+}
+
 interface Cursor {
   termIndex?: number;
-  page?: number;
+  next?: string | null;
 }
 
 export async function runCourtListenerBackfill(
@@ -76,7 +93,7 @@ export async function runCourtListenerBackfill(
   const raw = await env.CONFIG.get("cursor:courtlistener");
   const cursor: Cursor = raw ? (JSON.parse(raw) as Cursor) : {};
   let termIndex = cursor.termIndex ?? 0;
-  let page = cursor.page ?? 1;
+  let next: string | null = typeof cursor.next === "string" && cursor.next.startsWith(HOST) ? cursor.next : null;
 
   const headers: Record<string, string> = { "User-Agent": "carriers-on-notice/0.1 (+contact@athipp.com)", Accept: "application/json" };
   if (env.COURTLISTENER_TOKEN) headers["Authorization"] = `Token ${env.COURTLISTENER_TOKEN}`;
@@ -95,9 +112,15 @@ export async function runCourtListenerBackfill(
     calls++;
 
     let items: DocketItem[] = [];
+    let pageNext: string | null = null;
     try {
-      const res = await doFetch(buildCourtListenerUrl(BASE, queries[termIndex]!, page), { headers });
-      if (res.ok) items = parseCourtListener(await res.json());
+      const url = next ?? buildCourtListenerUrl(BASE, queries[termIndex]!);
+      const res = await doFetch(url, { headers });
+      if (res.ok) {
+        const body: unknown = await res.json();
+        items = parseCourtListener(body);
+        pageNext = parseNextUrl(body);
+      }
     } catch {
       items = [];
     }
@@ -116,16 +139,17 @@ export async function runCourtListenerBackfill(
       if (inrec) inserted++;
     }
 
-    // Empty page means this term is exhausted; move to the next term.
-    if (items.length === 0) {
+    // No continuation URL (or an empty page) means this term is exhausted;
+    // move to the next term.
+    if (items.length === 0 || !pageNext) {
       termIndex++;
-      page = 1;
+      next = null;
     } else {
-      page++;
+      next = pageNext;
     }
   }
 
-  await env.CONFIG.put("cursor:courtlistener", JSON.stringify({ termIndex, page } satisfies Cursor));
+  await env.CONFIG.put("cursor:courtlistener", JSON.stringify({ termIndex, next } satisfies Cursor));
   const more = termIndex < queries.length && !budgetExhausted;
-  return { inserted, calls, budgetExhausted, more, cursorKey: `${termIndex}:${page}` };
+  return { inserted, calls, budgetExhausted, more, cursorKey: `${termIndex}:${next ?? "start"}` };
 }

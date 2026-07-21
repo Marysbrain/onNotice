@@ -1,7 +1,7 @@
 import type { Env } from "../env.js";
 import { parseFeed, buildExcerpt } from "../lib/rss.js";
 import { enabledSources, insertRecord, touchSource } from "../db/records.js";
-import { matchCarrier } from "../lib/taxonomy.js";
+import { matchCarrier, isTelecomRelevant } from "../lib/taxonomy.js";
 
 const UA = "carriers-on-notice/0.1 (+contact@athipp.com)";
 
@@ -27,6 +27,9 @@ export async function collectFtcRss(env: Env): Promise<{ source: string; new: nu
 
       for (const item of items) {
         if (!item.link) continue;
+        // Same relevance gate as the backfill walker. The FTC publishes across
+        // every industry; only telecom-relevant releases become records.
+        if (!isTelecomRelevant(`${item.title} ${item.description}`)) continue;
         const excerpt = buildExcerpt(item);
         const carrier = matchCarrier(`${item.title} ${item.description}`);
         const inserted = await insertRecord(env, {

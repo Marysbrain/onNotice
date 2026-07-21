@@ -18,11 +18,30 @@ interface IssueTerm {
 const carriers = taxonomy.carriers as Carrier[];
 const issueTerms = taxonomy.issue_terms as IssueTerm[];
 
+// Substring matching misattributes: "against mobilewalla" contains "t mobile".
+// Every pattern match requires non-alphanumeric (or string edge) on both sides.
+const regexCache = new Map<string, RegExp>();
+
+function termRegex(term: string): RegExp {
+  let re = regexCache.get(term);
+  if (!re) {
+    const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    re = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`);
+    regexCache.set(term, re);
+  }
+  return re;
+}
+
+// True if term appears in text as a whole word or phrase, case-insensitive.
+export function containsTerm(text: string, term: string): boolean {
+  return termRegex(term).test(text.toLowerCase());
+}
+
 // Return the first carrier id whose display/marketing patterns appear in text.
 export function matchCarrier(text: string): string | null {
   const hay = text.toLowerCase();
   for (const c of carriers) {
-    if (c.patterns.some((p) => hay.includes(p.toLowerCase()))) return c.id;
+    if (c.patterns.some((p) => termRegex(p).test(hay))) return c.id;
   }
   return null;
 }
@@ -33,7 +52,7 @@ export function matchCarriersAll(text: string): string[] {
   const hay = text.toLowerCase();
   const ids: string[] = [];
   for (const c of carriers) {
-    if (c.patterns.some((p) => hay.includes(p.toLowerCase()))) ids.push(c.id);
+    if (c.patterns.some((p) => termRegex(p).test(hay))) ids.push(c.id);
   }
   return ids;
 }
@@ -44,7 +63,7 @@ export function matchPromoNames(text: string): Array<{ carrierId: string; name: 
   const out: Array<{ carrierId: string; name: string }> = [];
   for (const c of carriers) {
     for (const n of c.promo_names ?? []) {
-      if (hay.includes(n.toLowerCase())) out.push({ carrierId: c.id, name: n });
+      if (termRegex(n).test(hay)) out.push({ carrierId: c.id, name: n });
     }
   }
   return out;
@@ -55,7 +74,7 @@ export function matchPromoNames(text: string): Array<{ carrierId: string; name: 
 export function matchArbRespondent(company: string): string | null {
   const hay = company.toLowerCase();
   for (const c of carriers) {
-    if (c.arb_respondent_patterns.some((p) => hay.includes(p.toLowerCase()))) return c.id;
+    if (c.arb_respondent_patterns.some((p) => termRegex(p).test(hay))) return c.id;
   }
   return null;
 }
@@ -66,7 +85,7 @@ export function matchIssueTerms(text: string): string[] {
   const hay = text.toLowerCase();
   const hits: string[] = [];
   for (const t of issueTerms) {
-    if (hay.includes(t.term.toLowerCase())) hits.push(t.id);
+    if (termRegex(t.term).test(hay)) hits.push(t.id);
   }
   return hits;
 }
@@ -74,6 +93,18 @@ export function matchIssueTerms(text: string): string[] {
 // True if text mentions a carrier or any promo-credit issue term.
 export function hasTaxonomyMatch(text: string): boolean {
   return matchCarrier(text) !== null || matchIssueTerms(text).length > 0;
+}
+
+// Broad telecom relevance gate for government/press sources. Wider than the
+// carrier taxonomy on purpose: an action about "mobile carriers" with no
+// carrier named still belongs in the corpus.
+const TELECOM_TERMS = [
+  "wireless", "telecom", "mobile", "carrier", "broadband",
+  "cellular", "cell phone", "5g", "internet service",
+];
+
+export function isTelecomRelevant(text: string): boolean {
+  return hasTaxonomyMatch(text) || TELECOM_TERMS.some((t) => containsTerm(text, t));
 }
 
 // Promo names for a carrier, used by Track C. Empty if none seeded.

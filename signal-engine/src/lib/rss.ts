@@ -22,7 +22,9 @@ function decodeEntities(s: string): string {
 }
 
 function stripTags(s: string): string {
-  return decodeEntities(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+  // Decode first: FTC feeds ship HTML-encoded markup, and stripping before
+  // decoding lets tags reappear in the "clean" text.
+  return decodeEntities(s).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function firstTag(block: string, tag: string): string {

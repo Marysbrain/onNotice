@@ -1,6 +1,6 @@
 {
  "version": 1,
- "note": "Keyword taxonomy as data. Track C extends this. Match is case-insensitive substring unless a term is marked regex. Do not hardcode these in source.",
+ "note": "Keyword taxonomy as data. Track C extends this. Match is case-insensitive whole-word/phrase (non-alphanumeric boundaries on both sides). Carrier patterns and promo_names attribute records to a carrier, so every entry must be distinctive to that carrier. Generic industry terms (installment plan, promo credit, eip) belong in issue_terms, never in a carrier list.",
  "carriers": [
   {
    "id": "att",
@@ -10,24 +10,19 @@
     "at & t",
     "att mobility",
     "at&t mobility",
-    "cricket",
     "cricket wireless"
    ],
    "arb_respondent_patterns": [
     "at&t mobility",
     "at&t services",
     "at&t corp",
-    "cricket"
+    "cricket wireless",
+    "cricket communications"
    ],
    "promo_names": [
     "next up",
     "att next",
     "next up anytime",
-    "installment plan",
-    "device unlock",
-    "trade in and save",
-    "buy one get one",
-    "bogo",
     "unlimited your way"
    ]
   },
@@ -37,7 +32,8 @@
    "patterns": [
     "verizon",
     "verizon wireless",
-    "visible",
+    "visible wireless",
+    "visible by verizon",
     "total by verizon",
     "total wireless"
    ],
@@ -47,14 +43,8 @@
     "verizon"
    ],
    "promo_names": [
-    "device payment",
     "verizon device payment",
-    "promo credit",
-    "myplan",
-    "new phone on us",
-    "select 5g plans",
-    "trade in guarantee",
-    "switch and save"
+    "myplan"
    ]
   },
   {
@@ -64,8 +54,8 @@
     "t-mobile",
     "tmobile",
     "t mobile",
-    "metro",
     "metropcs",
+    "metro pcs",
     "metro by t-mobile",
     "mint mobile"
    ],
@@ -73,18 +63,15 @@
     "t-mobile us",
     "t-mobile usa",
     "metropcs",
-    "metro"
+    "metro pcs",
+    "metro by t-mobile"
    ],
    "promo_names": [
-    "equipment installment plan",
-    "eip",
-    "insider",
     "keep and switch",
     "go5g",
     "go5g plus",
     "phone freedom",
-    "24 monthly bill credits",
-    "trade in and get"
+    "24 monthly bill credits"
    ]
   }
  ],
@@ -170,6 +157,26 @@
   {
    "id": "device_balance",
    "term": "device balance"
+  },
+  {
+   "id": "promo_credit",
+   "term": "promo credit"
+  },
+  {
+   "id": "device_payment_plan",
+   "term": "device payment"
+  },
+  {
+   "id": "installment_plan",
+   "term": "installment plan"
+  },
+  {
+   "id": "equipment_installment",
+   "term": "equipment installment plan"
+  },
+  {
+   "id": "device_unlock",
+   "term": "device unlock"
   }
  ],
  "carrier_issue_variants": {
