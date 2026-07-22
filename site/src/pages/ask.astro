@@ -1,0 +1,393 @@
+---
+import Base from "../layouts/Base.astro";
+
+// Turnstile site key comes from a public env var at build. With a key, the
+// ask box is live: real widget, enabled submit. Without one, it stays in its
+// pre-launch placeholder state, matching tell.astro. No tracking script here;
+// Turnstile is a bot check, not analytics.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+const askLive = Boolean(turnstileSiteKey);
+
+const examples = [
+  "How many AT&T issues are in the library?",
+  "Has AT&T improved?",
+];
+---
+
+<Base
+  title="Ask the evidence"
+  description="Ask a question and get an answer built only from the vetted public evidence library, with citations. No opinions, no individuals, no legal advice."
+>
+  <div class="wrap prose" data-pagefind-body>
+    <h1>Ask the evidence</h1>
+
+    <p>
+      Ask a question about carrier device promotions and you get an answer built
+      only from the vetted public evidence library, the same sourced records you
+      can browse yourself. Every answer comes back with the citations it was
+      built from, so you can check each one. If the records do not cover your
+      question, the answer says so instead of guessing.
+    </p>
+    <p>
+      This is not a chatbot with opinions. It will not tell you what to think,
+      it will not name or judge individual people, and it will not give legal
+      advice. It answers from records, or it declines. Answers are assembled by
+      an AI reading those records, and every answer shows that plainly.
+    </p>
+
+    {
+      !askLive && (
+        <div class="notice">
+          <p>
+            <strong>Ask opens soon.</strong> This box is not live yet. Once it
+            opens, your question is checked for a real person and answered only
+            from the vetted evidence library.
+          </p>
+        </div>
+      )
+    }
+
+    <h2>Ask a question</h2>
+
+    <div class="field">
+      <p class="hint">Try one of these</p>
+      <div class="chips">
+        {
+          examples.map((q) => (
+            <button type="button" class="chip" data-example={q}>
+              {q}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="question">Your question</label>
+      <input
+        id="question"
+        name="question"
+        type="text"
+        maxlength="500"
+        autocomplete="off"
+        placeholder="Ask about carrier device promotions"
+        disabled={!askLive}
+      />
+      <p class="hint">Up to 500 characters. One clear question works best.</p>
+    </div>
+
+    <div class="field">
+      <p class="hint">Human check</p>
+      {
+        askLive ? (
+          <div class="cf-turnstile" data-sitekey={turnstileSiteKey} />
+        ) : (
+          <div class="turnstile-placeholder">
+            Cloudflare Turnstile appears here when the ask box opens. It checks
+            that a real person is asking. It is not a tracking cookie.
+          </div>
+        )
+      }
+    </div>
+
+    {
+      askLive ? (
+        <button type="button" id="ask-btn" class="btn">
+          Ask the evidence
+        </button>
+      ) : (
+        <button type="button" class="btn" disabled aria-disabled="true">
+          Ask (opens soon)
+        </button>
+      )
+    }
+    {
+      !askLive && (
+        <p class="hint">
+          The button is off until the ask box opens. Nothing is sent.
+        </p>
+      )
+    }
+
+    <div id="ask-status" class="ask-status" role="status" aria-live="polite" hidden>
+    </div>
+
+    <div id="answer" class="answer-block" hidden>
+      <h2>Answer</h2>
+      <div id="answer-text" class="answer-text"></div>
+      <div id="citations-wrap" hidden>
+        <h3>Citations</h3>
+        <ul id="citations" class="citation-list"></ul>
+      </div>
+      <p id="disclosure" class="ai-disclosure" role="note"></p>
+    </div>
+
+    {
+      askLive && (
+        <script
+          is:inline
+          async
+          defer
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        />
+      )
+    }
+
+    <script is:inline define:vars={{ askLive }}>
+      // One vanilla script. It fills the input from the example chips, posts the
+      // question to /api/ask, and renders the answer, citations, and the AI
+      // disclosure that comes back from the API. No framework, no bundler.
+      (function () {
+        var input = document.getElementById("question");
+
+        // Chips fill the input on any build, so people can read the examples.
+        var chips = document.querySelectorAll(".chip");
+        for (var i = 0; i < chips.length; i++) {
+          chips[i].addEventListener("click", function () {
+            input.value = this.getAttribute("data-example");
+            input.focus();
+          });
+        }
+
+        if (!askLive) return;
+
+        var btn = document.getElementById("ask-btn");
+        var statusBox = document.getElementById("ask-status");
+        var answerBox = document.getElementById("answer");
+        var answerText = document.getElementById("answer-text");
+        var citationsWrap = document.getElementById("citations-wrap");
+        var citations = document.getElementById("citations");
+        var disclosure = document.getElementById("disclosure");
+
+        function showStatus(msg) {
+          statusBox.textContent = msg;
+          statusBox.hidden = false;
+        }
+        function clearStatus() {
+          statusBox.textContent = "";
+          statusBox.hidden = true;
+        }
+        function hideAnswer() {
+          answerBox.hidden = true;
+          answerText.textContent = "";
+          citations.innerHTML = "";
+          citationsWrap.hidden = true;
+          disclosure.textContent = "";
+        }
+
+        function getToken() {
+          if (window.turnstile && typeof window.turnstile.getResponse === "function") {
+            return window.turnstile.getResponse() || "";
+          }
+          var field = document.querySelector('[name="cf-turnstile-response"]');
+          return field ? field.value : "";
+        }
+        function resetTurnstile() {
+          if (window.turnstile && typeof window.turnstile.reset === "function") {
+            try {
+              window.turnstile.reset();
+            } catch (e) {}
+          }
+        }
+
+        function renderCitations(list) {
+          citations.innerHTML = "";
+          if (!list || !list.length) {
+            citationsWrap.hidden = true;
+            return;
+          }
+          var sourceNames = {
+            aaa_arb: "AAA consumer arbitration file",
+            jams_arb: "JAMS consumer case file",
+            courtlistener: "Court record (CourtListener)",
+            ftc_backfill: "FTC press release",
+            ftc_rss_press: "FTC press release",
+            ftc_rss_consumer: "FTC press release",
+            ca_ag_rss: "California AG news",
+            hackernews: "Public discussion (Hacker News)",
+            methodology: "How these numbers are made",
+          };
+          for (var i = 0; i < list.length; i++) {
+            var c = list[i] || {};
+            var li = document.createElement("li");
+            var a = document.createElement("a");
+            a.href = c.source_url || "#";
+            a.rel = "nofollow noopener";
+            a.target = "_blank";
+            a.textContent = sourceNames[c.source_id] || c.source_id || c.source_url || "record";
+            li.appendChild(a);
+            if (c.record_date) {
+              var span = document.createElement("span");
+              span.className = "cite-date";
+              // record_date arrives as epoch seconds; show a plain date.
+              span.textContent = " (" + new Date(c.record_date * 1000).toISOString().slice(0, 10) + ")";
+              li.appendChild(span);
+            }
+            citations.appendChild(li);
+          }
+          citationsWrap.hidden = false;
+        }
+
+        function renderAnswer(data) {
+          answerText.textContent = data.answer || "";
+          // A refusal is shown as a plain sentence with no citations.
+          if (data.refused) {
+            renderCitations(null);
+          } else {
+            renderCitations(data.citations);
+          }
+          // The AI disclosure from the API renders near every answer, always.
+          disclosure.textContent =
+            data.disclosure || "This answer was assembled by an AI from vetted records.";
+          answerBox.hidden = false;
+        }
+
+        function ask() {
+          var question = (input.value || "").trim();
+          if (!question) {
+            hideAnswer();
+            showStatus("Type a question first.");
+            return;
+          }
+          var token = getToken();
+          if (!token) {
+            hideAnswer();
+            showStatus("Please complete the human check first.");
+            return;
+          }
+
+          hideAnswer();
+          btn.disabled = true;
+          showStatus("checking the records...");
+
+          fetch("/api/ask", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ question: question, token: token }),
+          })
+            .then(function (res) {
+              if (res.status === 429) {
+                showStatus(
+                  "That is a lot of questions in a short time. Please wait a few minutes and try again."
+                );
+                return null;
+              }
+              if (res.status === 503) {
+                showStatus("The ask box is not open yet. Nothing was sent.");
+                return null;
+              }
+              if (!res.ok) {
+                showStatus(
+                  "Something went wrong reaching the records. Please try again."
+                );
+                return null;
+              }
+              return res.json().catch(function () {
+                showStatus("The records sent back something unreadable. Please try again.");
+                return null;
+              });
+            })
+            .then(function (data) {
+              if (!data) return;
+              clearStatus();
+              renderAnswer(data);
+            })
+            .catch(function () {
+              showStatus("Could not reach the records. Please try again.");
+            })
+            .then(function () {
+              btn.disabled = false;
+              // Turnstile tokens are single use, so reset for the next question.
+              resetTurnstile();
+            });
+        }
+
+        btn.addEventListener("click", ask);
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            ask();
+          }
+        });
+      })();
+    </script>
+
+    <h2>Where the answers come from</h2>
+    <p>
+      Answers are built from the same records you can read in the
+      <a href="/library">evidence library</a>, under the rules on the
+      <a href="/methodology">methodology</a> page. The facts are sourced. Any
+      read on what they add up to is labeled commentary, and this box does not
+      offer one.
+    </p>
+  </div>
+
+  <style>
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .chip {
+      font: inherit;
+      font-size: 0.92rem;
+      background: var(--surface);
+      color: var(--link);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+    }
+    .turnstile-placeholder {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--bg);
+      color: var(--text-soft);
+      max-width: var(--measure);
+      font-size: 0.95rem;
+    }
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .ask-status {
+      margin: 1rem 0;
+      color: var(--text-soft);
+      font-style: italic;
+    }
+    .answer-block {
+      margin: 1.5rem 0;
+    }
+    .answer-text {
+      max-width: var(--measure);
+      white-space: pre-wrap;
+    }
+    .citation-list {
+      max-width: var(--measure);
+      padding-left: 1.2rem;
+    }
+    .citation-list li {
+      margin: 0.35rem 0;
+      overflow-wrap: anywhere;
+    }
+    .cite-date {
+      color: var(--text-soft);
+    }
+    .ai-disclosure {
+      max-width: var(--measure);
+      margin-top: 1.25rem;
+      border: 1px solid var(--sample-border);
+      border-left: 4px solid var(--accent);
+      background: var(--sample-bg);
+      color: var(--sample-text);
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+  </style>
+</Base>

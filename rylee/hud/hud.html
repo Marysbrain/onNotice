@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>Carriers On Notice broadcast HUD</title>
+<style>
+  /*
+    Rylee broadcast HUD. 1920x1080 transparent overlay for an OBS browser source.
+    Palette is Okabe Ito, chosen for colorblind safety. Meaning never rides on
+    color alone. Every state also carries a word or a shape. No em dashes appear
+    anywhere in this file, in code, in comments, or in on screen text.
+  */
+
+  :root {
+    /* Okabe Ito colorblind safe accents */
+    --amber:      #E69F00; /* records critical  */
+    --steel:      #56B4E9; /* records neutral   */
+    --teal:       #009E73; /* records favorable */
+    --ink:        #EAF0F6;
+    --ink-dim:    #9FB0C0;
+    --panel:      rgba(10, 15, 22, 0.82);
+    --panel-soft: rgba(10, 15, 22, 0.55);
+    --hair:       rgba(180, 205, 230, 0.22);
+    --ring-cool:  #7FD4FF;
+    --good:       #009E73;
+    --warn:       #E69F00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    background: transparent;
+    overflow: hidden;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #stage {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Citation panel. This is the product. It gets the most weight.       */
+  /* ------------------------------------------------------------------ */
+
+  #citations {
+    position: absolute;
+    top: 96px;
+    right: 56px;
+    width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #citations .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-left: 6px solid var(--ring-cool);
+    border-radius: 10px;
+    letter-spacing: 0.16em;
+    font-size: 19px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  #citations .panel-head .mark {
+    font-size: 22px;
+    line-height: 1;
+  }
+  #citations .panel-head .count {
+    margin-left: auto;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+  }
+
+  .cite-card {
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-left: 6px solid var(--teal);
+    border-radius: 10px;
+    padding: 16px 18px 16px 18px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    transform: translateX(560px);
+    opacity: 0;
+    transition: transform 360ms cubic-bezier(0.16, 0.84, 0.34, 1), opacity 360ms ease;
+    will-change: transform, opacity;
+  }
+  .cite-card.in { transform: translateX(0); opacity: 1; }
+  .cite-card.out { transform: translateX(40px); opacity: 0; }
+
+  .cite-card .row-top {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .cite-card .tag {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--teal);
+    border: 1px solid rgba(0, 158, 115, 0.6);
+    border-radius: 4px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .cite-card .date {
+    margin-left: auto;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .cite-card .source {
+    font-size: 24px;
+    line-height: 1.24;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .cite-card .url {
+    font-size: 16px;
+    color: var(--ink-dim);
+    letter-spacing: 0.01em;
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    word-break: break-all;
+  }
+
+  /* Connection chip. Shape and word, never color alone. */
+  #conn {
+    position: absolute;
+    top: 40px;
+    right: 56px;
+    display: none;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 14px;
+    background: var(--panel);
+    border: 1px solid var(--warn);
+    border-radius: 999px;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  #conn.show { display: inline-flex; }
+  #conn .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--warn);
+    animation: blink 1s steps(2, start) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.25; } }
+
+  /* ------------------------------------------------------------------ */
+  /* Bottom third desk strip.                                            */
+  /* ------------------------------------------------------------------ */
+
+  #desk {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 384px;
+    padding: 0 56px 26px 56px;
+    background: linear-gradient(180deg,
+      rgba(8, 12, 18, 0.0) 0%,
+      rgba(8, 12, 18, 0.55) 34%,
+      rgba(8, 12, 18, 0.9) 100%);
+  }
+
+  /* Sentiment accent bar sits along the top edge of the strip. */
+  #sentiment {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 8px;
+    background: rgba(120, 140, 160, 0.35);
+    transition: background 500ms ease;
+  }
+  #sentiment.state-neg { background: var(--amber); }
+  #sentiment.state-neutral { background: var(--steel); }
+  #sentiment.state-pos { background: var(--teal); }
+
+  #sentiment-chip {
+    position: absolute;
+    top: 22px;
+    left: 56px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  #sentiment-chip.show { display: inline-flex; }
+  #sentiment-chip .shape { font-size: 16px; line-height: 1; }
+  #sentiment-chip.state-neg { color: var(--amber); border-color: rgba(230,159,0,0.55); }
+  #sentiment-chip.state-neutral { color: var(--steel); border-color: rgba(86,180,233,0.55); }
+  #sentiment-chip.state-pos { color: var(--teal); border-color: rgba(0,158,115,0.55); }
+
+  #desk-inner {
+    position: absolute;
+    left: 56px;
+    right: 596px; /* leave clear space under the citation panel */
+    bottom: 86px; /* clear the persistent disclosure below */
+    top: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 18px;
+  }
+
+  /* The two anchor cells. */
+  #anchors {
+    display: flex;
+    align-items: flex-end;
+    gap: 34px;
+  }
+  .anchor {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .anchor canvas {
+    width: 108px;
+    height: 108px;
+    display: block;
+  }
+  .anchor .meta { display: flex; flex-direction: column; gap: 6px; }
+  .anchor .name {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .anchor .state {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .anchor .state .glyph {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--ink-dim);
+    background: transparent;
+  }
+  .anchor.speaking .state { color: var(--ring-cool); }
+  .anchor.speaking .state .glyph {
+    border-color: var(--ring-cool);
+    background: var(--ring-cool);
+    box-shadow: 0 0 10px rgba(127, 212, 255, 0.8);
+  }
+  .anchor.speaking .name { color: #ffffff; }
+
+  /* Question and caption block. */
+  #speech {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 92px;
+  }
+  #question {
+    display: none;
+    font-size: 30px;
+    line-height: 1.24;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  #question.show { display: block; }
+  #question .lead {
+    color: var(--ring-cool);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-right: 10px;
+  }
+  #caption {
+    display: none;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink-dim);
+    max-width: 1180px;
+  }
+  #caption.show { display: block; }
+
+  /* Persistent AI disclosure. Present at all times, never removed. */
+  #disclosure {
+    position: absolute;
+    left: 56px;
+    bottom: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--panel-soft);
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    font-size: 16px;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+    z-index: 50;
+  }
+  #disclosure .badge {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #0b0f16;
+    background: var(--ring-cool);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+
+    <!-- Reconnecting chip. Hidden while connected. -->
+    <div id="conn"><span class="dot"></span><span>Reconnecting</span></div>
+
+    <!-- Citation panel. The most important element on the HUD. -->
+    <section id="citations" aria-label="Citations">
+      <div class="panel-head">
+        <span class="mark">&#9634;</span>
+        <span>On the record</span>
+        <span class="count" id="cite-count">0 shown</span>
+      </div>
+      <div id="cite-stack"></div>
+    </section>
+
+    <!-- Bottom third desk strip. -->
+    <section id="desk">
+      <div id="sentiment"></div>
+      <div id="sentiment-chip"><span class="shape"></span><span class="word"></span></div>
+
+      <div id="desk-inner">
+        <div id="anchors">
+          <div class="anchor" id="anchor-rylee">
+            <canvas width="216" height="216" aria-hidden="true"></canvas>
+            <div class="meta">
+              <span class="name">Rylee</span>
+              <span class="state"><span class="glyph"></span><span class="label">Standby</span></span>
+            </div>
+          </div>
+          <div class="anchor" id="anchor-co">
+            <canvas width="216" height="216" aria-hidden="true"></canvas>
+            <div class="meta">
+              <span class="name">Co-anchor</span>
+              <span class="state"><span class="glyph"></span><span class="label">Standby</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="speech">
+          <div id="question"><span class="lead">Now answering:</span><span class="qtext"></span></div>
+          <div id="caption"></div>
+        </div>
+      </div>
+
+      <!-- Persistent, non removable AI disclosure. -->
+      <div id="disclosure">
+        <span class="badge">AI</span>
+        <span>Rylee is an AI. Every claim cites the public record.</span>
+      </div>
+    </section>
+  </div>
+
+<script>
+"use strict";
+(function () {
+  var WS_URL = "ws://127.0.0.1:8765";
+
+  /* ---------------------------------------------------------------- */
+  /* Anchor pulse rings. Arc reactor style, kept subtle for a news     */
+  /* desk. Amplitude drives the glow when that anchor is speaking.     */
+  /* ---------------------------------------------------------------- */
+
+  function Ring(canvas) {
+    this.cv = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.w = canvas.width;
+    this.h = canvas.height;
+    this.target = 0;   // incoming amplitude 0..1
+    this.level = 0;    // smoothed
+    this.speaking = false;
+    this.phase = 0;
+  }
+  Ring.prototype.setAmplitude = function (v) {
+    if (v < 0) v = 0; if (v > 1) v = 1;
+    this.target = v;
+  };
+  Ring.prototype.setSpeaking = function (on) {
+    this.speaking = on;
+    if (!on) this.target = 0;
+  };
+  Ring.prototype.draw = function (dt) {
+    var ctx = this.ctx, w = this.w, h = this.h;
+    var cx = w / 2, cy = h / 2;
+    var base = Math.min(w, h) * 0.30;
+
+    // idle breathing plus smoothed amplitude
+    this.phase += dt * (this.speaking ? 3.2 : 1.1);
+    var breathe = (Math.sin(this.phase) * 0.5 + 0.5) * (this.speaking ? 0.12 : 0.06);
+    var goal = this.speaking ? (0.15 + this.target * 0.85) : 0.0;
+    this.level += (goal - this.level) * Math.min(1, dt * 9);
+    var amp = this.level;
+
+    ctx.clearRect(0, 0, w, h);
+
+    var cool = this.speaking ? "127, 212, 255" : "120, 150, 175";
+    var alphaBase = this.speaking ? 1 : 0.55;
+
+    // outer static ring
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(" + cool + ", " + (0.28 * alphaBase) + ")";
+    ctx.beginPath();
+    ctx.arc(cx, cy, base * 1.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // segmented tick ring, slowly rotating
+    var segs = 48;
+    for (var i = 0; i < segs; i++) {
+      var a = (i / segs) * Math.PI * 2 + this.phase * 0.15;
+      var lit = (i % 4 === 0);
+      var r0 = base * 1.28;
+      var r1 = base * (1.28 + (lit ? 0.12 : 0.06) + amp * (lit ? 0.14 : 0.05));
+      ctx.strokeStyle = "rgba(" + cool + ", " + ((lit ? 0.55 : 0.22) * alphaBase) + ")";
+      ctx.lineWidth = lit ? 3 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+
+    // amplitude ring
+    ctx.lineWidth = 4 + amp * 6;
+    ctx.strokeStyle = "rgba(" + cool + ", " + ((0.35 + amp * 0.5) * alphaBase) + ")";
+    ctx.beginPath();
+    ctx.arc(cx, cy, base * (0.92 + breathe + amp * 0.16), 0, Math.PI * 2);
+    ctx.stroke();
+
+    // core glow
+    var coreR = base * (0.5 + breathe * 0.6 + amp * 0.35);
+    var grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, coreR);
+    grad.addColorStop(0, "rgba(" + cool + ", " + ((0.55 + amp * 0.4) * alphaBase) + ")");
+    grad.addColorStop(0.6, "rgba(" + cool + ", " + (0.18 * alphaBase) + ")");
+    grad.addColorStop(1, "rgba(" + cool + ", 0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  var rings = {
+    rylee: new Ring(document.querySelector("#anchor-rylee canvas")),
+    co: new Ring(document.querySelector("#anchor-co canvas"))
+  };
+
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    rings.rylee.draw(dt);
+    rings.co.draw(dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ---------------------------------------------------------------- */
+  /* DOM handles.                                                      */
+  /* ---------------------------------------------------------------- */
+
+  var el = {
+    conn: document.getElementById("conn"),
+    sentiment: document.getElementById("sentiment"),
+    sentChip: document.getElementById("sentiment-chip"),
+    sentShape: document.querySelector("#sentiment-chip .shape"),
+    sentWord: document.querySelector("#sentiment-chip .word"),
+    question: document.getElementById("question"),
+    qtext: document.querySelector("#question .qtext"),
+    caption: document.getElementById("caption"),
+    citeStack: document.getElementById("cite-stack"),
+    citeCount: document.getElementById("cite-count"),
+    rylee: document.getElementById("anchor-rylee"),
+    co: document.getElementById("anchor-co")
+  };
+
+  function anchorEl(a) { return a === "co" ? el.co : el.rylee; }
+
+  function setSpeaking(anchor, on) {
+    var node = anchorEl(anchor);
+    node.classList.toggle("speaking", on);
+    node.querySelector(".state .label").textContent = on ? "On air" : "Standby";
+    if (rings[anchor]) rings[anchor].setSpeaking(on);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Sentiment. Color plus a word plus a shape. Never color alone.     */
+  /* Resting state shows no claim until an event arrives.              */
+  /* ---------------------------------------------------------------- */
+
+  var SENT = {
+    positive: { cls: "state-pos", word: "Records favorable", shape: "▲" },
+    neutral:  { cls: "state-neutral", word: "Records neutral", shape: "■" },
+    negative: { cls: "state-neg", word: "Records critical", shape: "▼" }
+  };
+  function setSentiment(value) {
+    var s = SENT[value];
+    if (!s) return;
+    el.sentiment.className = "";
+    el.sentiment.classList.add(s.cls);
+    el.sentChip.className = "show " + s.cls;
+    el.sentShape.textContent = s.shape;
+    el.sentWord.textContent = s.word;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Question and caption. Only shown when data is sent.               */
+  /* ---------------------------------------------------------------- */
+
+  function setQuestion(q) {
+    if (q && String(q).trim().length) {
+      el.qtext.textContent = q;
+      el.question.classList.add("show");
+    } else {
+      el.qtext.textContent = "";
+      el.question.classList.remove("show");
+    }
+  }
+  function setCaption(text) {
+    if (text && String(text).trim().length) {
+      el.caption.textContent = text;
+      el.caption.classList.add("show");
+    } else {
+      el.caption.textContent = "";
+      el.caption.classList.remove("show");
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Citation cards. Stack up to 3. Oldest fades out.                  */
+  /* ---------------------------------------------------------------- */
+
+  var MAX_CARDS = 3;
+
+  function shortenUrl(raw) {
+    if (!raw) return "";
+    var s = String(raw).trim();
+    s = s.replace(/^[a-z]+:\/\//i, "");
+    s = s.replace(/^www\./i, "");
+    s = s.replace(/\/+$/, "");
+    if (s.length <= 46) return s;
+    var slash = s.indexOf("/");
+    if (slash === -1) return s.slice(0, 45) + "…";
+    var host = s.slice(0, slash);
+    var path = s.slice(slash);
+    var room = 44 - host.length;
+    if (room < 6) room = 6;
+    if (path.length > room) path = path.slice(0, room) + "…";
+    return host + path;
+  }
+
+  function formatDate(d) {
+    if (d === null || d === undefined) return "Date not recorded";
+    var n = Number(d);
+    if (!isFinite(n)) return "Date not recorded";
+    // plain year
+    if (n >= 1900 && n <= 2100) return String(Math.trunc(n));
+    // unix seconds
+    if (n >= 1e9 && n < 1e11) {
+      var dt = new Date(n * 1000);
+      return dt.toISOString().slice(0, 10);
+    }
+    // unix milliseconds
+    if (n >= 1e11 && n < 1e14) {
+      var dm = new Date(n);
+      return dm.toISOString().slice(0, 10);
+    }
+    return String(Math.trunc(n));
+  }
+
+  function addCitation(ev) {
+    var card = document.createElement("div");
+    card.className = "cite-card";
+
+    var top = document.createElement("div");
+    top.className = "row-top";
+    var tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = "Source";
+    var date = document.createElement("span");
+    date.className = "date";
+    date.textContent = formatDate(ev.record_date);
+    top.appendChild(tag);
+    top.appendChild(date);
+
+    var src = document.createElement("div");
+    src.className = "source";
+    src.textContent = ev.source_name ? String(ev.source_name) : "Unnamed record";
+
+    var url = document.createElement("div");
+    url.className = "url";
+    url.textContent = shortenUrl(ev.source_url);
+
+    card.appendChild(top);
+    card.appendChild(src);
+    card.appendChild(url);
+
+    // newest on top
+    el.citeStack.insertBefore(card, el.citeStack.firstChild);
+    // reflow then slide in
+    void card.offsetWidth;
+    card.classList.add("in");
+
+    // trim to the three newest
+    var cards = el.citeStack.querySelectorAll(".cite-card");
+    for (var i = MAX_CARDS; i < cards.length; i++) {
+      retireCard(cards[i]);
+    }
+    updateCount();
+  }
+
+  function retireCard(card) {
+    if (card.dataset.retiring) return;
+    card.dataset.retiring = "1";
+    card.classList.remove("in");
+    card.classList.add("out");
+    setTimeout(function () {
+      if (card.parentNode) card.parentNode.removeChild(card);
+      updateCount();
+    }, 380);
+  }
+
+  function updateCount() {
+    var n = el.citeStack.querySelectorAll(".cite-card:not([data-retiring])").length;
+    el.citeCount.textContent = n + (n === 1 ? " shown" : " shown");
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Idle reset. Clears only HUD state, never the disclosure.          */
+  /* ---------------------------------------------------------------- */
+
+  function goIdle() {
+    setSpeaking("rylee", false);
+    setSpeaking("co", false);
+    setQuestion("");
+    setCaption("");
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Event handling. Unknown types are ignored.                        */
+  /* The HUD never shows anything not sent to it.                      */
+  /* ---------------------------------------------------------------- */
+
+  function handle(ev) {
+    if (!ev || typeof ev.type !== "string") return;
+    switch (ev.type) {
+      case "speak_start":
+        var a = (ev.anchor === "co") ? "co" : "rylee";
+        setSpeaking("co", a === "co");
+        setSpeaking("rylee", a === "rylee");
+        setQuestion(ev.question);
+        setCaption("");
+        break;
+      case "amplitude":
+        if (rings[ev.anchor]) rings[ev.anchor].setAmplitude(Number(ev.value));
+        break;
+      case "sentence":
+        setCaption(ev.text);
+        break;
+      case "citation":
+        addCitation(ev);
+        break;
+      case "sentiment":
+        setSentiment(ev.value);
+        break;
+      case "speak_end":
+        if (ev.anchor === "co" || ev.anchor === "rylee") {
+          setSpeaking(ev.anchor, false);
+        } else {
+          setSpeaking("rylee", false);
+          setSpeaking("co", false);
+        }
+        setCaption("");
+        break;
+      case "idle":
+        goIdle();
+        break;
+      default:
+        // unknown types ignored on purpose
+        break;
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* WebSocket client with reconnect backoff.                          */
+  /* ---------------------------------------------------------------- */
+
+  var ws = null;
+  var backoff = 500;
+  var BACKOFF_MAX = 8000;
+
+  function showConn(show) {
+    el.conn.classList.toggle("show", show);
+  }
+
+  function connect() {
+    try {
+      ws = new WebSocket(WS_URL);
+    } catch (e) {
+      scheduleReconnect();
+      return;
+    }
+    ws.onopen = function () {
+      backoff = 500;
+      showConn(false);
+    };
+    ws.onmessage = function (msg) {
+      var data;
+      try { data = JSON.parse(msg.data); } catch (e) { return; }
+      if (Array.isArray(data)) { data.forEach(handle); }
+      else { handle(data); }
+    };
+    ws.onclose = function () { scheduleReconnect(); };
+    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+  }
+
+  function scheduleReconnect() {
+    showConn(true);
+    setTimeout(connect, backoff);
+    backoff = Math.min(BACKOFF_MAX, Math.round(backoff * 1.7));
+  }
+
+  connect();
+
+  // Expose a local injection hook for offline review without a bridge.
+  // It calls the same handler the socket uses. No network involved.
+  window.RYLEE_HUD = { inject: handle };
+})();
+</script>
+</body>
+</html>
