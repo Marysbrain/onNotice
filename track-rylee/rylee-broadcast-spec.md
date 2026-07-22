@@ -119,3 +119,20 @@ MLX (mlx-audio) is benchmarked against the ONNX Kokoro path in stage 2 and the f
 
 1. Flip Apple Intelligence on in the mini's System Settings when the moderation gate is built.
 2. Approve piping the Ollama cloud API key into a Worker secret when the showrunner is built (machine-side, never displayed).
+
+## Amendment 3, 2026-07-22: the show format doctrine
+
+Founder direction: the output must be engaging, storytelling-first, conversational between the two anchors, and unflinchingly customer-advocate. Brutally honest about the good, the bad, and the ugly. This amendment is the showrunner's constitution.
+
+### The doctrine
+
+1. The two voices split the two jobs of journalism. The story anchor carries what happened to the customer: the promise, the change, the cost. The receipts anchor carries the record: case numbers, dates, fine print read verbatim. Their conversation is questions and restatements, which carry no factual claims and need no citations.
+2. Segment structure: cold open on one real case told as narrative (arbitration records carry no customer names, so privacy is structural). Then the pattern number that makes it more than an anecdote. Then the fine-print reading, the actual before and after from the terms diffs, delivered flat and slow. Then what the viewer can do, pointing at the take action hub and /tell.
+3. Punch comes from factual restatement, never verdicts. Not "that's outrageous." Instead "that's three years of your bill, and month thirty-five counts for nothing." If a line characterizes motive or renders a moral verdict, it does not belong to an anchor.
+4. The good and the ugly run on the same machinery. A favorable terms change gets a cold open, the same prominence, the same receipts. This is what makes the critical segments impossible to dismiss.
+5. Michael's read: a labeled commentary segment in Michael's own prerecorded voice, introduced on air as his commentary. The anchors state what the records show; Michael says what it adds up to. The facts and commentary split performed as a format. Rylee introduces it and never extends it.
+6. Emotion controls set delivery, not content: weight and gravity for harm, warmth for good news, flatness for fine print. Tone is the show's; facts are the library's; verdicts are Michael's, labeled.
+
+### Enforcement, unchanged and non-negotiable
+
+Every factual line in a script carries the id of a record from its retrieval set or the validator rejects the line. Banter and reaction lines carry no facts. Citations render on the HUD as their lines are spoken. The no-additions invariant applies to scripts exactly as to live answers.
