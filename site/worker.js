@@ -1,15 +1,22 @@
-// Site worker. Two jobs only:
+// Site worker. Jobs:
 //   1. X-Robots-Tag noindex on workers.dev hosts, so staging never gets
 //      indexed while the production domain stays clean.
 //   2. POST /api/submit: the story form endpoint. Turnstile server
 //      verification, then one insert into stories with review_status queued.
 //      A human reviews everything; nothing publishes from here.
+//   3. POST /api/ask: the Ask the Evidence endpoint. Turnstile server
+//      verification, then forwards the question to the signal engine
+//      server-side and returns its JSON verbatim. Forwarding here keeps the
+//      brain URL one hop behind our domain and sidesteps CORS, since the
+//      brain sends no CORS headers.
 //
 // PRIVACY: no IP address, no user agent, no cookies are stored. The optional
 // contact field is never displayed anywhere.
 
 const CARRIERS = new Set(["att", "verizon", "tmobile", "other"]);
 const MAX_BODY = 32 * 1024;
+const MAX_QUESTION = 500;
+const BRAIN_URL = "https://signal-engine.carriersonnotice.workers.dev/ask";
 
 export default {
   async fetch(request, env) {
@@ -19,6 +26,10 @@ export default {
       return handleSubmit(request, env);
     }
 
+    if (url.pathname === "/api/ask") {
+      return handleAsk(request, env);
+    }
+
     const res = await env.ASSETS.fetch(request);
     if (!url.hostname.endsWith(".workers.dev")) return res;
     const headers = new Headers(res.headers);
@@ -26,6 +37,76 @@ export default {
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   },
 };
+
+// Shared Turnstile check. Returns true only when Cloudflare confirms the token
+// belongs to a real person. Used by both /api/submit and /api/ask so the verify
+// logic lives in exactly one place.
+async function verifyTurnstile(token, env) {
+  if (!token) return false;
+  const verify = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token }),
+  });
+  const outcome = await verify.json().catch(() => ({ success: false }));
+  return Boolean(outcome.success);
+}
+
+function json(body, status) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+async function handleAsk(request, env) {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: { allow: "POST" } });
+  }
+  // Ask stays closed until the Turnstile secret exists, same rule as submit.
+  if (!env.TURNSTILE_SECRET) {
+    return json({ error: "not open yet" }, 503);
+  }
+  const len = Number(request.headers.get("content-length") ?? "0");
+  if (len > MAX_BODY) return new Response("Payload too large", { status: 413 });
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "bad request" }, 400);
+  }
+
+  const token = typeof payload.token === "string" ? payload.token : "";
+  const ok = await verifyTurnstile(token, env);
+  if (!ok) return json({ error: "human check failed" }, 403);
+
+  const question =
+    typeof payload.question === "string"
+      ? payload.question.slice(0, MAX_QUESTION).trim()
+      : "";
+  if (!question) return json({ error: "empty question" }, 400);
+
+  // Forward server-side. The brain answers only from vetted records and returns
+  // its own JSON, including the AI disclosure string, which we pass through
+  // untouched. We also pass its status through so the page can react to a 429.
+  let brainRes;
+  try {
+    brainRes = await fetch(BRAIN_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+  } catch {
+    return json({ error: "the records are unreachable right now" }, 502);
+  }
+
+  const bodyText = await brainRes.text();
+  return new Response(bodyText, {
+    status: brainRes.status,
+    headers: { "content-type": "application/json" },
+  });
+}
 
 async function handleSubmit(request, env) {
   if (request.method !== "POST") {
@@ -47,15 +128,8 @@ async function handleSubmit(request, env) {
   }
 
   const token = str(form, "cf-turnstile-response", 4096);
-  if (!token) return redirect("/tell/?status=human-check");
-
-  const verify = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token }),
-  });
-  const outcome = await verify.json().catch(() => ({ success: false }));
-  if (!outcome.success) return redirect("/tell/?status=human-check");
+  const ok = await verifyTurnstile(token, env);
+  if (!ok) return redirect("/tell/?status=human-check");
 
   const whatHappened = str(form, "what_happened", 8000).trim();
   const agree = str(form, "agree", 8) === "on";

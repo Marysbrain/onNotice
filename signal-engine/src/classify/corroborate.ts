@@ -79,13 +79,17 @@ export async function runCorroborate(env: Env): Promise<{ scanned: number; upgra
     const group = ids.slice(i, i + IN_CHUNK);
     if (group.length === 0) continue;
     const placeholders = group.map((_, k) => `?${k + 2}`).join(",");
+    // Count actual base rows via RETURNING rather than meta.changes. The Phase 4
+    // records_fts triggers write shadow-table rows on every records UPDATE, and
+    // D1's meta.changes includes those, so it would over-count upgrades.
     const out = await env.DB.prepare(
       `UPDATE records SET vetting_status = 'corroborated', updated_at = ?1
-        WHERE vetting_status = 'single_source' AND id IN (${placeholders})`
+        WHERE vetting_status = 'single_source' AND id IN (${placeholders})
+        RETURNING id`
     )
       .bind(now, ...group)
-      .run();
-    upgraded += out.meta.changes ?? 0;
+      .all<{ id: number }>();
+    upgraded += out.results?.length ?? 0;
   }
 
   return { scanned: rows.length, upgraded };

@@ -94,3 +94,28 @@ The mandate is unchanged: brain first, refusals proven, then voice. The two-anch
 1. Both anchor voice picks from the Kokoro roster (female and male).
 2. The second anchor's name. Rylee has the desk; her co-anchor needs a name.
 3. Approval of the produced-lane engine after hearing Chatterbox versus Orpheus renders on the studio monitors.
+
+## Amendment 2, 2026-07-21: the control plane and the sources of intelligence
+
+Founder direction, same evening: leverage Cloudflare Workers as the controller of the produced lane, leverage the existing Ollama subscription, and leverage what Apple ships on the mini. Decided as one design.
+
+### The show control plane lives on Cloudflare
+
+Writing the show is a text problem; performing it is an audio problem. Workers own the text side. A nightly cron assembles new records into a digest, the showrunner drafts the two-anchor script, and the per-line citation validator runs server-side next to the corpus, where no mouth-side bug can route around it. A small /show API tracks each segment through drafted, validated, rendered, published. Scripts wait in D1, finished audio lands in R2, and the mini polls for validated scripts and renders when it has cycles. A stalled or busy mini stalls nothing but rendering. Standing bonus once segments exist in R2: an RSS feed off the site worker makes the produced lane a podcast at zero cost.
+
+### The intelligence hierarchy (each layer has one job and a fallback below it)
+
+1. Truth layer: the deterministic /ask brain on Cloudflare. No model of any size ever touches facts. This is permanent.
+2. Reflex layer: Apple's on-device foundation model (macOS 26 Foundation Models framework, about 3B) for the chat moderation gate and cheap tagging. Instant, private, free, and it does not compete with the big models for memory. Requires the Apple Intelligence toggle in the mini's System Settings, a one-time founder click.
+3. Conversation layer: the local Ollama 8B for Rylee's live phrasing.
+4. Craft layer: the founder's Ollama cloud subscription (already paid, twenty dollars monthly) for showrunner scripts and hard classifier cases. Standing rule: the subscription is an upgrade layer, never a dependency. Every use gets a fallback chain, hosted first, Workers AI second, local 8B last, so cancellation degrades polish, never existence.
+5. Utility layer: Workers AI server-side for classification, as today.
+
+### Apple-specific adoptions
+
+MLX (mlx-audio) is benchmarked against the ONNX Kokoro path in stage 2 and the faster one wins. whisper.cpp gets its Core ML encoder when call-ins arrive. Apple's built-in voices are never used on air: licensing and brand both say no.
+
+### New founder items from this amendment
+
+1. Flip Apple Intelligence on in the mini's System Settings when the moderation gate is built.
+2. Approve piping the Ollama cloud API key into a Worker secret when the showrunner is built (machine-side, never displayed).

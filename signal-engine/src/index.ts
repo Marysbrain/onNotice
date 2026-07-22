@@ -17,6 +17,7 @@ import { runClassify } from "./classify/run.js";
 import { runCorroborate } from "./classify/corroborate.js";
 import { runLinks } from "./classify/links.js";
 import { runPublish } from "./publish/publish.js";
+import { handleAsk } from "./ask/handle.js";
 
 // Two cron triggers (see wrangler.jsonc). We branch on controller.cron:
 //   */5 * * * *  -> drain the job queue
@@ -39,6 +40,12 @@ export default {
 
     if (url.pathname === "/health") {
       return json({ ok: true, env: env.ENVIRONMENT });
+    }
+
+    // Phase 4 brain (Rylee). GET ?q= for testing, POST {question}. Rate limited,
+    // deterministic templates only, eligible records only. See src/ask/.
+    if (url.pathname === "/ask") {
+      return handleAsk(req, env);
     }
 
     if (url.pathname === "/run") {

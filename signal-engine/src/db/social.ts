@@ -42,10 +42,13 @@ export async function purgeKeys(env: Env, keys: string[]): Promise<number> {
   for (const group of chunk(keys, IN_CHUNK)) {
     if (group.length === 0) continue;
     const placeholders = group.map((_, i) => `?${i + 1}`).join(",");
-    const res = await env.DB.prepare(`DELETE FROM records WHERE dedupe_key IN (${placeholders})`)
+    // Count actual base rows via RETURNING rather than meta.changes. The Phase 4
+    // records_fts triggers write shadow-table rows on every records DELETE, and
+    // D1's meta.changes includes those, so it would over-count deletions.
+    const res = await env.DB.prepare(`DELETE FROM records WHERE dedupe_key IN (${placeholders}) RETURNING id`)
       .bind(...group)
-      .run();
-    deleted += res.meta.changes ?? 0;
+      .all<{ id: number }>();
+    deleted += res.results?.length ?? 0;
   }
   return deleted;
 }

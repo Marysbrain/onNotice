@@ -76,6 +76,50 @@ describe("confidence routing", () => {
     expect(lo!.review_status).toBe("queued");
     expect(lo!.review_reason).toContain("below bar");
   });
+
+  it("drains deterministic records in bulk, more than the AI budget, with no AI calls", async () => {
+    // 20 records that all resolve deterministically to one carrier. This is above
+    // the old batch of 8 and above AI_CALLS_PER_RUN. The AI stage must not fire.
+    const throwing = new StubClassifier(() => {
+      throw new Error("AI must not be called for deterministic records");
+    });
+    for (let i = 0; i < 20; i++) {
+      await seed({ dedupeKey: `bulk${i}`, excerpt: "T-Mobile keep and switch bill credits vanished" });
+    }
+
+    const res = await runClassify(env, throwing);
+    expect(res.processed).toBe(20);
+    expect(res.processed).toBeGreaterThan(8);
+    expect(res.aiCalls).toBe(0);
+
+    const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM records WHERE review_status='unrouted'").first<{ n: number }>();
+    expect(left!.n).toBe(0);
+  });
+
+  it("spends at most AI_CALLS_PER_RUN AI calls, leaving the rest unrouted for a later run", async () => {
+    // 15 records that name no carrier, so each needs the AI stage. Only 8 should
+    // get a model call this run; the other 7 stay unrouted, not queued.
+    let calls = 0;
+    const counting = new StubClassifier(() => {
+      calls++;
+      return { carrier: null, promo_name: null, alleged_issue: null, confidence: 0.9, rationale: "stub" };
+    });
+    for (let i = 0; i < 15; i++) {
+      await seed({ dedupeKey: `ai${i}`, excerpt: "just some unrelated text with no carrier named" });
+    }
+
+    const res = await runClassify(env, counting);
+    expect(calls).toBe(8);
+    expect(res.aiCalls).toBe(8);
+    expect(res.processed).toBe(8);
+
+    const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM records WHERE review_status='unrouted'").first<{ n: number }>();
+    expect(left!.n).toBe(7); // 15 - 8, held for a later run, none forced to confidence 0
+
+    // The untouched records keep confidence NULL: they were skipped, not scored.
+    const zeroed = await env.DB.prepare("SELECT COUNT(*) AS n FROM records WHERE review_status='unrouted' AND confidence IS NOT NULL").first<{ n: number }>();
+    expect(zeroed!.n).toBe(0);
+  });
 });
 
 describe("corroboration", () => {

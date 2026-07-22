@@ -76,14 +76,28 @@ download() {
 log "root is ${RYLEE_HOME}"
 mkdir -p "${RYLEE_HOME}" "${MODELS}" "${OUT}"
 
-# Python version guard. Target is 3.11 or newer.
-PYBIN="${PYBIN:-python3}"
-PYVER="$("${PYBIN}" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
-log "using ${PYBIN} (Python ${PYVER})"
-"${PYBIN}" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' || {
-  log "ERROR: need Python 3.11 or newer. Found ${PYVER}."
+# Python version guard. Target is 3.11 or newer. If the default python3 is too
+# old, look for a newer interpreter already on the box before giving up. We use
+# what exists; we never install system packages ourselves.
+find_python() {
+  local cand
+  for cand in "${PYBIN:-}" python3 /opt/homebrew/bin/python3.12 /opt/homebrew/bin/python3.13 /opt/homebrew/bin/python3.14 /opt/homebrew/bin/python3 /Library/Frameworks/Python.framework/Versions/Current/bin/python3; do
+    [[ -n "$cand" ]] || continue
+    command -v "$cand" >/dev/null 2>&1 || continue
+    if "$cand" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' 2>/dev/null; then
+      echo "$cand"
+      return 0
+    fi
+  done
+  return 1
+}
+
+PYBIN="$(find_python)" || {
+  log "ERROR: no Python 3.11+ found on this machine."
   exit 1
 }
+PYVER="$("${PYBIN}" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+log "using ${PYBIN} (Python ${PYVER})"
 
 # Virtual environment.
 if [[ ! -x "${VENV}/bin/python" ]]; then
@@ -99,13 +113,23 @@ source "${VENV}/bin/activate"
 log "upgrading pip"
 python -m pip install --upgrade pip >/dev/null
 
-log "installing pinned dependencies"
-python -m pip install \
-  "numpy==${NUMPY_VERSION}" \
-  "onnxruntime==${ONNXRUNTIME_VERSION}" \
-  "kokoro-onnx==${KOKORO_ONNX_VERSION}" \
-  "soundfile==${SOUNDFILE_VERSION}" \
-  "requests==${REQUESTS_VERSION}"
+# The pins were validated on Python 3.11/3.12. Newer interpreters (3.13+) have
+# no wheels for some pinned versions, so there we let pip resolve current
+# releases and record exactly what it picked for future re-pinning.
+if "${PYBIN}" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 13) else 1)'; then
+  log "Python ${PYVER}: installing latest compatible dependencies"
+  python -m pip install numpy onnxruntime kokoro-onnx soundfile requests
+  python -m pip freeze > "${RYLEE_HOME}/versions.txt"
+  log "resolved versions written to ${RYLEE_HOME}/versions.txt"
+else
+  log "installing pinned dependencies"
+  python -m pip install \
+    "numpy==${NUMPY_VERSION}" \
+    "onnxruntime==${ONNXRUNTIME_VERSION}" \
+    "kokoro-onnx==${KOKORO_ONNX_VERSION}" \
+    "soundfile==${SOUNDFILE_VERSION}" \
+    "requests==${REQUESTS_VERSION}"
+fi
 
 # Model files.
 if need_download "${ONNX_PATH}" "${ONNX_MIN_BYTES}"; then

@@ -12,10 +12,23 @@ import { selectClassifier, type Classifier } from "./classifier.js";
 // vetting. vetting_status stays single_source until corroboration or a human
 // upgrades it.
 //
-// Batch is small on purpose: 8 records * (1 update each) plus 1 select stays well
-// under the 50-queries-per-invocation free limit, even when the runner claims
-// this job alongside others.
-const BATCH = 8;
+// Two separate limits, because two separate constraints bind us.
+//
+// CAP is the D1 limit. The deterministic tagger resolves most records with no
+// model call, so deterministic work is cheap and should flow through in bulk.
+// D1 query math for the worst case of one run:
+//   1 SELECT (the batch) + up to CAP UPDATEs (one per processed record) = 1 + CAP.
+// Records we skip for AI budget get no UPDATE, so CAP bounds the update count.
+// CAP = 25 gives a worst case of 26 queries, about half the 50-queries-per-
+// invocation free limit. That leaves headroom for the other jobs the runner
+// co-claims in the same invocation plus its own claim/complete bookkeeping.
+const CAP = 25;
+
+// AI_CALLS_PER_RUN is the model-budget limit, the real bottleneck for the 9,300
+// unrouted arbitration records. Once a run spends this many AI calls, any further
+// record that would need the model is left unrouted for a later run. We do not
+// write it with confidence 0; we simply do not process it this time.
+const AI_CALLS_PER_RUN = 8;
 
 interface Row {
   id: number;
@@ -26,18 +39,20 @@ interface Row {
 export async function runClassify(
   env: Env,
   classifier?: Classifier
-): Promise<{ processed: number; cleared: number; queued: number }> {
+): Promise<{ processed: number; cleared: number; queued: number; aiCalls: number }> {
   const clf = classifier ?? (await selectClassifier(env));
   const bar = await confidenceBar(env);
 
   const candidates = await env.DB.prepare(
     `SELECT id, excerpt, carrier FROM records WHERE review_status = 'unrouted' ORDER BY id LIMIT ?1`
   )
-    .bind(BATCH)
+    .bind(CAP)
     .all<Row>();
 
+  let processed = 0;
   let cleared = 0;
   let queued = 0;
+  let aiCalls = 0;
   const now = Math.floor(Date.now() / 1000);
 
   for (const row of candidates.results ?? []) {
@@ -55,7 +70,13 @@ export async function runClassify(
       allegedIssue = det.allegedIssue;
       confidence = det.confidence ?? 0.95;
     } else {
+      // Needs the model. If the AI budget is spent, leave this record unrouted
+      // and move on. A later run picks it up. Skipping is not a downgrade: no
+      // UPDATE runs, so the record keeps review_status = 'unrouted' untouched.
+      // Deterministic records after it in the batch still flow through.
+      if (aiCalls >= AI_CALLS_PER_RUN) continue;
       const ai = await clf.classify({ excerpt: row.excerpt, carrier: row.carrier });
+      aiCalls++;
       carrier = ai.carrier ?? row.carrier ?? null;
       promoName = ai.promo_name;
       allegedIssue = ai.alleged_issue ?? det.allegedIssue;
@@ -81,9 +102,10 @@ export async function runClassify(
       .bind(row.id, carrier, promoName, allegedIssue, confidence, reviewStatus, reviewReason, now)
       .run();
 
+    processed++;
     if (clears) cleared++;
     else queued++;
   }
 
-  return { processed: (candidates.results ?? []).length, cleared, queued };
+  return { processed, cleared, queued, aiCalls };
 }
