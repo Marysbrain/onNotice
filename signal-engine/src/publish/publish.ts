@@ -4,6 +4,7 @@ import { sumByState, sumByZip, monthlyTrendByState, monthRange } from "../db/fcc
 import { computeHotspots } from "./hotspots.js";
 import { getCursor, setCursor } from "../lib/config.js";
 import { blueskyPermalink } from "../collectors/bluesky.js";
+import { advanceClaims, buildClaimsAggregate } from "./claims.js";
 
 // Publish pre-aggregated JSON to R2 for Track E. The public site reads these
 // files directly, so they carry counts and locations only. No excerpts, no
@@ -15,6 +16,8 @@ import { blueskyPermalink } from "../collectors/bluesky.js";
 //   aggregates/totals.json    totals, including the strict verified count
 //   aggregates/hotspots.json  ranked hot spots for the map flames
 //   aggregates/links.json     the thread graph (cleared-or-better records only)
+//   aggregates/claims.json    arbitration consumer claim/award dollar totals from
+//                             the last completed aaa_arb excerpt sweep
 //
 // Rabbit-hole drill-down (spread across runs by cursor):
 //   aggregates/states/{XX}.json   per-state monthly trend, top issues, records
@@ -203,7 +206,7 @@ async function writeRecordFiles(env: Env): Promise<number> {
 
 export async function runPublish(
   env: Env
-): Promise<{ map: number; mentions: number; totals: number; states: number; records: number; hotspots: number; edges: number }> {
+): Promise<{ map: number; mentions: number; totals: number; states: number; records: number; hotspots: number; edges: number; claims_processed: number; claims_completed: boolean }> {
   const now = Math.floor(Date.now() / 1000);
 
   const map = await buildMap(env);
@@ -221,6 +224,13 @@ export async function runPublish(
   const states = await writeStateFiles(env);
   const records = await writeRecordFiles(env);
 
+  // Advance the arbitration-dollar sweep by one bounded batch, then publish the
+  // last completed sweep. The write happens every run so the file always exists;
+  // its contents only change when a sweep finishes (see claims.ts).
+  const claims = await advanceClaims(env);
+  const claimsDoc = await buildClaimsAggregate(env);
+  await env.RAW.put("aggregates/claims.json", JSON.stringify(claimsDoc), JSON_META);
+
   return {
     map: map.byState.length + map.byZip.length,
     mentions: mentions.length,
@@ -229,5 +239,7 @@ export async function runPublish(
     records,
     hotspots: hotspots.length,
     edges: graph.edges.length,
+    claims_processed: claims.processed,
+    claims_completed: claims.completed,
   };
 }

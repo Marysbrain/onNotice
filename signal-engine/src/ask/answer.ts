@@ -8,6 +8,8 @@ import { carrierList, matchCarrier } from "../lib/taxonomy.js";
 import { checkWall } from "./walls.js";
 import { classifyIntent, buildFtsQuery, sourceCategory } from "./router.js";
 import { tagFor } from "./tags.js";
+import { claimTotalForCarrier } from "../publish/claims.js";
+import { dollarsFloorGrouped } from "./money.js";
 import {
   type AskResponse,
   type Citation,
@@ -117,12 +119,28 @@ async function countIntent(env: Env, question: string): Promise<IntentResult> {
   }
   const total = arb + court + reg;
   const disp = carrierDisplay(carrier);
-  const answer =
+  let answer =
     `The vetted library holds ${total} ${plural(total, "record", "records")} naming ${disp}: ` +
     `${arb} consumer arbitration ${plural(arb, "case", "cases")}, ` +
     `${court} court ${plural(court, "record", "records")}, ` +
     `${reg} regulator or press ${plural(reg, "record", "records")}. ` +
     `Only corroborated or verified primary records are counted.`;
+
+  // Arbitration dollar sentence, OFF by default. Raw claim-column sums are
+  // dominated by absurd outlier asks (single filings claiming billions), so the
+  // faithful sum reads as inflation. It stays gated behind CONFIG ASK_CLAIMS=on
+  // until the robust-statistics pass (median, capped sums, outlier counts)
+  // ships and is reviewed. Real numbers only means real in impression, not
+  // just real in arithmetic.
+  const claimsFlag = await env.CONFIG.get("ASK_CLAIMS");
+  if (claimsFlag === "on") {
+    const claim = await claimTotalForCarrier(env, carrier);
+    if (claim) {
+      answer +=
+        ` Consumers brought at least $${dollarsFloorGrouped(claim.cents)} in claims against ` +
+        `${disp} in these cases, per the AAA public file.`;
+    }
+  }
 
   const citations = await representatives(env, carrier);
   citations.push(METHODOLOGY_CITATION);
