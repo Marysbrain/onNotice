@@ -1,0 +1,262 @@
+---
+import Base from "../../layouts/Base.astro";
+
+// AT&T iPhone trade-in decode. Every quote below is verbatim from a stored
+// snapshot of AT&T's public trade-in deals page. Source and capture date are
+// rendered under each quote. The two AT&T terms pages that would carry the
+// promotion's fine print (tradein.att.com/offer-details and
+// tradein.att.com/terms-conditions) were captured on the same date but returned
+// a "JavaScript is deactivated" stub with no terms text, so their language is
+// not in the archive and is not quoted here.
+
+const deals = {
+  target: "terms_att_tradein_deals",
+  source: "att.com/deals/phone-trade-in",
+  url: "https://www.att.com/deals/phone-trade-in/",
+  captured: "2026-07-21",
+  archive: null, // no archive snapshot captured for this record
+};
+---
+
+<Base
+  title="AT&T iPhone trade-in, decoded"
+  description="The AT&T iPhone trade-in promotion advertised as iPhone on us, up to $1,100 off, set against the binding trade-in terms quoted verbatim from AT&T's own published pages."
+>
+  <div class="wrap prose" data-pagefind-body>
+    <p class="crumb"><a href="/decoded">The Offer, Decoded</a></p>
+    <h1>AT&T: iPhone on us, up to $1,100 off</h1>
+
+    <h2>The advertised offer</h2>
+    <p>
+      AT&T advertised the iPhone 17 Pro on us, up to $1,100 off, with a
+      qualifying trade-in. That is the offer as advertised. Below is what AT&T's
+      own published trade-in pages say about how the trade-in and its credits
+      work.
+    </p>
+
+    <p class="note-inline">
+      Every quote below is reproduced word for word from a stored snapshot of the
+      AT&T page named under it, captured on the date shown. Where the captured
+      page stored a line in an unusual or incomplete form, it is reproduced as
+      stored.
+    </p>
+
+    <h2>What you trade in</h2>
+
+    <figure class="quote">
+      <blockquote>
+        <p>You may submit up to five devices during a twelve-month period.</p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          If you’re on an installment plan with your old carrier, you’ll first
+          need to pay off the device before trading it into AT&T. Otherwise, your
+          old carrier may bill you for what you owe for the device.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <h2>How the credit arrives</h2>
+
+    <p>
+      The captured page states the promotional bill credit in this form:
+    </p>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          For trade-in value received as part of a trade-in promotion, bill
+          credits will be applied to your AT&T account in equal amounts over $30.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          If you’re trading in your device as part of a national trade-in
+          promotion, your eligible promotional credit will be applied to your
+          bill within 3 billing cycles.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          Once AT&T receives your old phone and verifies its condition, you will
+          get an AT&T Promotion Card credited with your phone’s value or the
+          value of your device offer as a bill credit.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <h2>What ends the credits</h2>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          Note: You must ship your old device within thirty (30) days of
+          activating your new device to remain eligible for promotional credit.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>Send us your old device within 30 days of activating your new one.</p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <h2>What happens to your old phone</h2>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          Before mailing, turn off activation locks like Find My iPhone and
+          Google activation locks to limit processing delays and avoid losing
+          your trade-in value.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          If your old device shows signs of wear, it will still be accepted, but
+          the value will be adjusted accordingly.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>
+          If the trade-in value of a device is zero, you can mail your device in
+          for recycling.
+        </p>
+      </blockquote>
+      <figcaption>
+        AT&T, <a href={deals.url} rel="nofollow noopener" target="_blank">{deals.source}</a>,
+        captured {deals.captured} (target {deals.target}).
+      </figcaption>
+    </figure>
+
+    <h2>What these captured terms do not answer</h2>
+    <p>
+      Two questions in the brief for this page have no supporting quote in the
+      snapshots, so those sections are left out. The captured pages also leave
+      several parts of the advertised offer unstated. As captured on
+      {" "}{deals.captured}, the AT&T trade-in pages do not state:
+    </p>
+    <ul>
+      <li>
+        the advertised amount or device. The words iPhone 17 Pro and up to $1,100
+        appear in the advertisement, not in the trade-in terms we captured.
+      </li>
+      <li>
+        a total number of months or a total dollar figure for the promotional
+        bill credit. The captured page says credits arrive in equal amounts and
+        within 3 billing cycles, and states the schedule as reproduced above.
+      </li>
+      <li>
+        what happens to the credits if wireless service is cancelled, a line is
+        removed, or the plan is changed.
+      </li>
+      <li>
+        what a customer owes on the financed device if they leave before the
+        credits finish. No section on early exit appears, so none is shown here.
+      </li>
+      <li>
+        whether the traded-in device is ever returned to the customer.
+      </li>
+    </ul>
+    <p>
+      The two AT&T pages that would carry this fine print,
+      tradein.att.com/offer-details and tradein.att.com/terms-conditions, were
+      captured on {deals.captured} but returned a page reading only that
+      JavaScript is deactivated, with no terms text to quote. When a readable
+      capture of those pages exists, their language will be added here.
+    </p>
+
+    <h2>Next</h2>
+    <ul>
+      <li><a href="/ask">Ask the evidence</a> a question about carrier promotions.</li>
+      <li><a href="/tell">Tell your story</a> if this happened to you.</li>
+      <li><a href="/take-action">Take action</a> with the FCC or your state attorney general.</li>
+      <li><a href="/methodology">Methodology</a> for how the terms archive is captured.</li>
+    </ul>
+  </div>
+
+  <style>
+    .crumb {
+      font-size: 0.92rem;
+      margin-bottom: 0.25rem;
+    }
+    .note-inline {
+      max-width: var(--measure);
+      border-left: 4px solid var(--border);
+      padding-left: 0.9rem;
+      color: var(--text-soft);
+      font-size: 0.95rem;
+    }
+    .quote {
+      max-width: var(--measure);
+      margin: 1.25rem 0;
+    }
+    .quote blockquote {
+      margin: 0;
+      border-left: 4px solid var(--accent);
+      background: var(--surface);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+    }
+    .quote blockquote p {
+      margin: 0;
+    }
+    .quote figcaption {
+      margin-top: 0.4rem;
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+  </style>
+</Base>

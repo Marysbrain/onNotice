@@ -1,0 +1,71 @@
+---
+import Base from "../../layouts/Base.astro";
+
+// The Offer, Decoded. A page family. Each page pairs one advertised carrier
+// promotion with the binding terms that govern it, quoted verbatim from the
+// carrier's own published pages, with the capture date and, where we have one,
+// an archive link. Facts only. Any read on what the facts add up to belongs on
+// a commentary page, not here.
+
+const pages = [
+  {
+    href: "/decoded/att-iphone-on-us",
+    carrier: "AT&T",
+    title: "iPhone on us, up to $1,100 off",
+    blurb:
+      "The AT&T trade-in promotion, decoded from AT&T's own published trade-in pages.",
+  },
+];
+---
+
+<Base
+  title="The Offer, Decoded"
+  description="The offer as advertised, then the binding terms that govern it, quoted verbatim from the carrier's own published pages, with capture dates and archive links."
+>
+  <div class="wrap prose" data-pagefind-body>
+    <h1>The Offer, Decoded</h1>
+
+    <p>
+      Carrier device promotions are advertised in a few large words and governed
+      by many small ones. This page family sets the two side by side. First the
+      offer as it is advertised. Then the binding terms that govern it, quoted
+      word for word from the carrier's own published pages, with the date we
+      captured each page and, where one exists, a link to an archived copy.
+    </p>
+
+    <p>
+      We do not paraphrase inside quotation marks. We do not tell you what the
+      terms mean for you. Plain headers group the quotes by the question a buyer
+      would ask. Where the published terms do not answer a question, we say so
+      and name the question rather than fill it in.
+    </p>
+
+    <p>
+      If you are comfortable with these conditions, the offer may work for you.
+      The point is knowing them before you sign.
+    </p>
+
+    <h2>Decodes</h2>
+    <ul class="card-grid">
+      {
+        pages.map((p) => (
+          <li class="card">
+            <h3>{p.carrier}: {p.title}</h3>
+            <p>{p.blurb}</p>
+            <a class="btn" href={p.href}>
+              Read the decode
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2>How to read these pages</h2>
+    <p>
+      Every quote carries the name of the source page we captured and the date
+      we captured it. When a quote looks incomplete or unusual, it is reproduced
+      as the captured page stored it. For how the terms archive is built, see the
+      <a href="/methodology">methodology</a> page.
+    </p>
+  </div>
+</Base>
