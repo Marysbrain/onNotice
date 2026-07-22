@@ -69,3 +69,28 @@ These are absolute. Wire them as code and prompt, then test them as bait.
 ## The one-line mandate
 
 Build the brain, prove it refuses, then give it Rylee's voice and put the receipts on screen where the carriers can watch them scroll. That has been the destination since 2024. Everything is finally underneath it.
+
+## Amendment 1, 2026-07-21: two anchors, emotion control, the desk format
+
+Founder direction: the broadcast becomes a two-anchor desk, one female voice and one male voice, both American news-anchor register, in the conversational style people know from NotebookLM audio overviews. Tone and emotion must be controllable. Everything stays local and free.
+
+### The two-lane voice architecture (decided)
+
+The latency budget and the expressiveness budget fight each other on a 16GB shared box, so the show runs two lanes.
+
+1. LIVE LANE. Real-time chat answers keep Kokoro (Apache), which is the only engine fast enough for the under-5-second first-audio benchmark on this hardware. Two anchor voices from Kokoro's American roster: one female, one male, exact picks are the founder's ear call. Emotion here is coarse: the sentiment tag from the brain drives pacing and delivery presets, not full acting.
+2. PRODUCED LANE. Scripted segments (the nightly digest desk, deep dives, terms-diff walkthroughs) are rendered ahead of air, where latency does not matter and expressiveness does. Engine: Chatterbox (MIT), which has an explicit emotion intensity control and a maintained Apple Silicon MPS path. Orpheus 3B (Apache, inline emotion tags) is the A/B alternate. Dia (Apache) is the most dialogue-native engine of all but is CUDA-first and underperforms on Apple Silicon, so it is benchmarked last, not first.
+
+### The showrunner (new component)
+
+A script generator turns brain-retrieved records into a two-anchor dialogue script. It runs on the existing local Ollama 8B. Hard rule, enforced by a deterministic validator, not by prompt trust: every factual line in the script must carry the id of a record from the retrieval set it was generated from, or the line is rejected. Banter lines carry no facts. Citations render on the HUD per line, same as live answers. The mouth's no-additions invariant applies to the script exactly as it applies to a single answer.
+
+### Sequencing
+
+The mandate is unchanged: brain first, refusals proven, then voice. The two-anchor desk extends stages 3 to 5: the HUD gains a second speaking indicator, stage 4 unlisted streams test both lanes, and the produced lane ships only after the live lane holds its multi-hour benchmark.
+
+### New founder items
+
+1. Both anchor voice picks from the Kokoro roster (female and male).
+2. The second anchor's name. Rylee has the desk; her co-anchor needs a name.
+3. Approval of the produced-lane engine after hearing Chatterbox versus Orpheus renders on the studio monitors.
