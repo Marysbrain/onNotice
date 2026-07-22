@@ -136,3 +136,23 @@ Founder direction: the output must be engaging, storytelling-first, conversation
 ### Enforcement, unchanged and non-negotiable
 
 Every factual line in a script carries the id of a record from its retrieval set or the validator rejects the line. Banter and reaction lines carry no facts. Citations render on the HUD as their lines are spoken. The no-additions invariant applies to scripts exactly as to live answers.
+
+## Amendment 4, 2026-07-22: questions, the human story, and the founder's read corrected
+
+Founder direction: the questions must be compelling, the human consequences must be the story, the growing financial impact on ordinary Americans must be conveyed, and the founder's commentary is machine-delivered because he uses systems to maximize the project's effectiveness.
+
+### The question doctrine
+
+Questions are the show's engine. The co-anchor's questions make stakes concrete and human: what a forfeited credit means in month twenty two of thirty six, what changes for a family when a promotion's fine print moves after signup. Questions may humanize, probe, and sharpen consequences. A question may never smuggle an unverified claim by implication. "What does this cost a family?" is allowed. "Isn't it true they planned this?" is an assertion in costume and is banned. The validator treats implication-carrying questions as factual lines: record id or rejection.
+
+### The human story pipeline
+
+Consented, scrubbed, human-reviewed stories from /tell are the cold-open material. The pattern comes from the files; the person comes from their own words, with consent and review as already specified. The show credits the storyteller only as they consented to be credited, defaulting to nothing.
+
+### The financial impact, sourced
+
+The AAA file carries per-case claim, award, and fee columns that the platform does not yet aggregate. Build item: capture and aggregate the dollar columns so the show can state total consumer claim dollars against the named carriers from the arbitration system's own public file. No unsourced statistics ever enter a script; population-share figures and similar framing stay out until a registry-cleared source backs them.
+
+### The founder's read, corrected
+
+Replaces amendment 3 item 5. The founder's commentary is written or approved by Michael and delivered by a dedicated third voice, distinct from both anchors and never a clone of Michael's voice. It is introduced on air as the founder's written commentary read aloud. His own voice is not required for any recurring segment. The voice-cloning ban and the facts-commentary split stand unchanged.
