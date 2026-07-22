@@ -96,7 +96,12 @@ def ask_brain(question: str, base_url: str = DEFAULT_BASE_URL) -> dict:
             req = urlrequest.Request(
                 url,
                 data=payload,
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    # Identify honestly. Cloudflare also rejects the default
+                    # Python-urllib agent with a 403, so this is load-bearing.
+                    "User-Agent": "rylee-mouth/0.1 (+contact@carriersonnotice.com)",
+                },
                 method="POST",
             )
             with urlrequest.urlopen(req, timeout=BRAIN_TIMEOUT) as resp:
