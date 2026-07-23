@@ -238,3 +238,11 @@ Founder direction: the station's music is full-spectrum sound design, not band i
 2. The expectation staircase, recorded honestly: moving instrumental quality at launch; room-tuned signature sound as the taste engine accumulates; indistinguishable within lanes in the ownership era. Chart position is not the claim; defining the format is.
 3. Every track is named at birth and its ID renders on screen. The chat parser resolves requests by name, by ID, and by memory: descriptive requests referencing a mood or a night are matched against birth certificates and outcome records. The clock carries a request slot policy.
 4. The station remembers its nights. Replay of crowd-born archives, and requests answered from them, are core product, not archive dust. The purpose line for the whole amendment: a place where people feel life again.
+
+## Amendment 10, 2026-07-23: the roar and the charts
+
+Founder direction: when the room demands a replay and floods with affirmation in every conceivable form, the station delivers. Our charts, our request data.
+
+1. The roar detector: consensus is behavioral, never a command, poll, or purchase. A replay reference plus an affirmation spike (message velocity, agreement phrasing, emoji density) crosses a threshold and the clock's request policy delivers. Thresholds scale with room size, anti-brigading heuristics apply, and the aggregate-never-profile rule governs all of it. The landscape check of 2026-07-23 is recorded: command-based chat music, vote apps, and request bots exist; behavioral consensus delivery does not. This is the moat.
+2. Every roar is outcome data: the taste engine treats a delivered encore as the strongest keep signal a track can earn.
+3. Native charts: most roared, most kept, the night's number one, computed from room behavior only. The weekly countdown of the room's own chart is a recurring variety segment: every entry written by the audience's moods, ranked by the audience's roars.
