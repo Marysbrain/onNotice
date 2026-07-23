@@ -220,3 +220,12 @@ Founder direction: consolidate live audience feedback per track, on the fly, and
 ### Sequencing
 
 The flywheel learns only from a live station, but the outcome schema ships with the clock scheduler build so no early stream's data is lost. Schema first, learning later.
+
+## Amendment 8, 2026-07-23: ownership of the improvement stack
+
+Founder direction: all improvements layered on the music engine are platform property, compounding toward output indistinguishable from the best paid systems within the station's lanes.
+
+1. Five owned layers, all above the base weights: the preference dataset (crowd-state, parameters, outcome), the fine-tune adapters trained on Apache-licensed bases, the mood engine, the mastering chain, and the curation ledger. All archived, all portable across base models: community base upgrades raise the floor for free, and the owned layers carry the ceiling.
+2. The quality claim is scoped honestly: indistinguishable within the station's chosen lanes and forms, not at everything. Narrow domain plus proprietary preference data is the configuration where small systems converge on giants.
+3. Adapter training beyond what the mini can do arrives with a COST FLAG or founder hardware, never silently.
+4. Disclosure survives quality: the day the output fools every ear, the station still says what it is. Indistinguishable sound, distinguishable honesty.
