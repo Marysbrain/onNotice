@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -43,6 +44,10 @@ HOME = Path.home()
 PRODUCED = HOME / "rylee" / "produced"
 DEFAULT_MODELS = PRODUCED / "models"
 DEFAULT_OUT = PRODUCED / "out"
+
+# Non-login shells (ssh commands, launchd, cron) do not carry Homebrew's PATH,
+# so resolve ffmpeg explicitly instead of trusting the environment.
+FFMPEG = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
 
 SPEAKERS = ("rylee", "co")
 DEFAULT_GAP_MS = 350
@@ -273,12 +278,12 @@ def _master(src: Path, wav_out: Path, mp3_out: Path) -> None:
         "loudnorm=I=-16:TP=-1.5:LRA=11"
     )
     subprocess.run(
-        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+        [FFMPEG, "-y", "-hide_banner", "-loglevel", "error",
          "-i", str(src), "-af", chain, str(wav_out)],
         check=True,
     )
     subprocess.run(
-        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+        [FFMPEG, "-y", "-hide_banner", "-loglevel", "error",
          "-i", str(wav_out), "-b:a", "64k", str(mp3_out)],
         check=True,
     )

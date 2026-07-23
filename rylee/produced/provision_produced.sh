@@ -111,7 +111,11 @@ fi
 # ---------------------------------------------------------------------------
 BIG_THRESHOLD=$((10 * 1024 * 1024))
 
-mapfile -t URLS < <(python - "${REPORT}" <<'PY'
+# macOS ships bash 3.2, which has no mapfile; read the URL list portably.
+URLS=()
+while IFS= read -r resolved_url; do
+  [[ -n "$resolved_url" ]] && URLS+=("$resolved_url")
+done < <(python - "${REPORT}" <<'PY'
 import json, sys
 rep = json.load(open(sys.argv[1]))
 seen = set()
@@ -123,6 +127,11 @@ for item in rep.get("install", []):
         print(url)
 PY
 )
+
+if (( ${#URLS[@]} == 0 )); then
+  log "ERROR: dependency report yielded no artifact URLs. See ${REPORT}."
+  exit 1
+fi
 
 log "resolved ${#URLS[@]} artifacts. Populating wheelhouse ..."
 for url in "${URLS[@]}"; do

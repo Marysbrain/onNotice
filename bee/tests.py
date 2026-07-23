@@ -298,5 +298,101 @@ class EndToEndTests(unittest.TestCase):
         self.assertIn("failure_reasons", job)
 
 
+class MoodBriefTests(unittest.TestCase):
+    def payload(self):
+        return {
+            "lane": "textural",
+            "lanes": ["textural", "cinematic", "electronic", "minimal", "maximal"],
+            "energy": 0.4,
+            "valence": 0.55,
+            "tempo_lo": 82,
+            "tempo_hi": 98,
+            "descriptors": ["warm", "patient", "open"],
+            "window_start": "2026-07-23T20:00:00Z",
+            "window_end": "2026-07-23T20:10:00Z",
+            "sample_n": 25,
+            "insufficient": False,
+        }
+
+    def good(self):
+        return {
+            "name": "Rain On A Tin Roof",
+            "prompt": "A textural piece for a warm and patient room. Soft felt piano over slow tape hiss. Space stays open and the movement drifts between 82 and 98 beats per minute.",
+            "tags": ["warm", "patient", "open"],
+        }
+
+    def test_accepts_clean_brief(self):
+        ok, reasons = bee.validate_mood_brief(self.payload(), self.good())
+        self.assertTrue(ok, reasons)
+
+    def test_rejects_foreign_tempo(self):
+        out = self.good()
+        out["prompt"] = out["prompt"].replace("82", "120")
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+        self.assertTrue(any("numbers" in r for r in reasons))
+
+    def test_rejects_song_form_vocals(self):
+        out = self.good()
+        out["prompt"] += " A verse and chorus carry the melody."
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+        self.assertTrue(any("vocal" in r for r in reasons))
+
+    def test_allows_voice_as_texture(self):
+        out = self.good()
+        out["prompt"] += " A wordless choir hums underneath."
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertTrue(ok, reasons)
+
+    def test_rejects_unknown_key(self):
+        out = self.good()
+        out["viewer_handle"] = "someone"
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+        self.assertTrue(any("unknown" in r for r in reasons))
+
+    def test_rejects_missing_key(self):
+        out = self.good()
+        del out["tags"]
+        ok, _ = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+
+    def test_rejects_missing_lane_word(self):
+        out = self.good()
+        out["prompt"] = "Soft felt piano between 82 and 98 beats per minute."
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+        self.assertTrue(any("lane" in r for r in reasons))
+
+    def test_rejects_digit_in_name(self):
+        out = self.good()
+        out["name"] = "Track 82"
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+
+    def test_rejects_uppercase_tag(self):
+        out = self.good()
+        out["tags"] = ["Warm", "patient", "open"]
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+
+    def test_rejects_em_dash(self):
+        out = self.good()
+        out["prompt"] += " tape " + chr(0x2014) + " hiss"
+        ok, reasons = bee.validate_mood_brief(self.payload(), out)
+        self.assertFalse(ok)
+
+    def test_input_validator_rejects_lane_outside_lanes(self):
+        p = self.payload()
+        p["lane"] = "vocal pop"
+        errs = bee.validate_input_mood_brief(p)
+        self.assertTrue(errs)
+
+    def test_input_validator_accepts_engine_payload(self):
+        errs = bee.validate_input_mood_brief(self.payload())
+        self.assertEqual(errs, [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

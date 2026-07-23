@@ -280,6 +280,90 @@ def validate_question_bank(payload, obj):
     return (len(reasons) == 0), reasons
 
 
+# Song-form vocal terms. The vocal-pop lane is closed until earned (amendment
+# 9 of the broadcast spec); wordless voice as texture stays open, so words
+# like choir and hum are not on this list.
+_VOCAL_POP_RE = re.compile(
+    r"\b(lyric|lyrics|verse|chorus|singer|vocalist|sung|rapping|rapper)\b",
+    re.IGNORECASE,
+)
+
+
+def validate_mood_brief(payload, obj):
+    reasons = []
+    if not isinstance(obj, dict):
+        return False, ["output is not a JSON object"]
+
+    allowed_keys = {"name", "prompt", "tags"}
+    unknown = set(obj.keys()) - allowed_keys
+    if unknown:
+        reasons.append("unknown keys {0}".format(sorted(unknown)))
+    missing = allowed_keys - set(obj.keys())
+    if missing:
+        return False, ["missing keys {0}".format(sorted(missing))]
+
+    # The only numbers the output may contain anywhere are numbers already in
+    # the input payload (the tempo range). Everything is checked against the
+    # serialized input, same discipline as the fact validators.
+    source = json.dumps(payload)
+
+    name = obj.get("name")
+    prompt_text = obj.get("prompt")
+    tags = obj.get("tags")
+
+    if not isinstance(name, str) or not name.strip():
+        reasons.append("name is not a non-empty string")
+    else:
+        if len(name.split()) > 6:
+            reasons.append("name is more than six words")
+        if len(name) > 60:
+            reasons.append("name is longer than 60 characters")
+        if numbers_in(name):
+            reasons.append("name contains a digit")
+
+    if not isinstance(prompt_text, str) or not prompt_text.strip():
+        reasons.append("prompt is not a non-empty string")
+    else:
+        if len(prompt_text) > 700:
+            reasons.append("prompt is {0} chars, over 700".format(len(prompt_text)))
+        lane = payload.get("lane", "")
+        if lane and lane.lower() not in prompt_text.lower():
+            reasons.append("prompt does not name the {0} lane".format(lane))
+        foreign = foreign_numbers(prompt_text, source)
+        if foreign:
+            reasons.append("prompt has numbers {0} not in the input".format(foreign))
+
+    if not isinstance(tags, list) or not (3 <= len(tags) <= 6):
+        reasons.append("tags must be a list of 3 to 6 entries")
+    else:
+        for idx, tag in enumerate(tags):
+            if not isinstance(tag, str) or not tag.strip():
+                reasons.append("tag {0} is not a non-empty string".format(idx + 1))
+                continue
+            if tag != tag.lower():
+                reasons.append("tag {0} is not lowercase".format(idx + 1))
+            if len(tag.split()) > 2:
+                reasons.append("tag {0} is more than two words".format(idx + 1))
+            if numbers_in(tag):
+                reasons.append("tag {0} contains a digit".format(idx + 1))
+
+    everything = " ".join([
+        name if isinstance(name, str) else "",
+        prompt_text if isinstance(prompt_text, str) else "",
+        " ".join(t for t in tags if isinstance(t, str)) if isinstance(tags, list) else "",
+    ])
+    if has_em_or_en_dash(everything):
+        reasons.append("output contains an em or en dash")
+    if _VOCAL_POP_RE.search(everything):
+        reasons.append("output uses song-form vocal terms; that lane is closed")
+    if _EMPLOYEE_RE.search(everything):
+        reasons.append("output names an employee role")
+    if _FOUNDER_RE.search(everything):
+        reasons.append("output mentions the founder")
+
+    return (len(reasons) == 0), reasons
+
+
 def validate_taxonomy_candidates(payload, obj):
     reasons = []
     joined = "\n".join(payload.get("excerpts", [])).lower()
@@ -350,6 +434,34 @@ def validate_input_question_bank(payload):
     return errs
 
 
+def validate_input_mood_brief(payload):
+    errs = []
+    lane = payload.get("lane")
+    lanes = payload.get("lanes")
+    if not isinstance(lane, str) or not lane.strip():
+        errs.append("lane must be a non-empty string")
+    if not isinstance(lanes, list) or not lanes:
+        errs.append("lanes must be a non-empty list")
+    elif lane not in lanes:
+        errs.append("lane must be one of lanes")
+    desc = payload.get("descriptors")
+    if not isinstance(desc, list) or not desc:
+        errs.append("descriptors must be a non-empty list")
+    elif not all(isinstance(d, str) and d.strip() for d in desc):
+        errs.append("every descriptor must be a non-empty string")
+    for key in ("tempo_lo", "tempo_hi"):
+        v = payload.get(key)
+        if not isinstance(v, int) or not (40 <= v <= 220):
+            errs.append("{0} must be an integer between 40 and 220".format(key))
+    if not errs and payload.get("tempo_lo") >= payload.get("tempo_hi"):
+        errs.append("tempo_lo must be below tempo_hi")
+    energy = payload.get("energy")
+    if not isinstance(energy, (int, float)) or isinstance(energy, bool) \
+            or not (0.0 <= float(energy) <= 1.0):
+        errs.append("energy must be a number in 0..1")
+    return errs
+
+
 def validate_input_taxonomy_candidates(payload):
     errs = []
     ex = payload.get("excerpts")
@@ -390,6 +502,27 @@ def parse_text(text):
     return (text or "").strip(), None
 
 
+def extract_json_object(text):
+    """Pull a JSON object out of model output tolerantly, parse strictly."""
+    t = (text or "").strip()
+    try:
+        v = json.loads(t)
+        if isinstance(v, dict):
+            return v, None
+    except Exception:
+        pass
+    i = t.find("{")
+    j = t.rfind("}")
+    if i != -1 and j != -1 and j > i:
+        try:
+            v = json.loads(t[i:j + 1])
+            if isinstance(v, dict):
+                return v, None
+        except Exception as e:
+            return None, "could not parse JSON object: {0}".format(e)
+    return None, "no JSON object found in model output"
+
+
 # ---------------------------------------------------------------------------
 # Job type registry. One row per type ties together its input validator, its
 # prompt builder, how to parse the model output, and its output validator.
@@ -419,6 +552,12 @@ TYPES = {
         "build": prompts.build_taxonomy_candidates,
         "parse": extract_json_array,
         "validate": validate_taxonomy_candidates,
+    },
+    "mood_brief": {
+        "input": validate_input_mood_brief,
+        "build": prompts.build_mood_brief,
+        "parse": extract_json_object,
+        "validate": validate_mood_brief,
     },
 }
 

@@ -123,9 +123,39 @@ OUTPUT contract. Return a single JSON array of strings and nothing else. Each st
     )
 
 
+def build_mood_brief(payload):
+    return """You write a music generation brief for Rylee Radio, the station arm of Carriers On Notice. The station's music is instrumental sound design, not band imitation. The human voice may appear only as wordless texture. Never as sung lyrics or song form vocals.
+
+{rules}
+
+THE ROOM RIGHT NOW:
+  lane: {lane}
+  energy (0 to 1): {energy}
+  mood words: {descriptors}
+  tempo range: {tempo_lo} to {tempo_hi} beats per minute
+
+OUTPUT contract. Return a single JSON object and nothing else, with exactly these keys:
+  "name": a track title, at most six words, no digits, evocative and plain
+  "prompt": one paragraph for a text to music model. Describe instruments, textures, space, and movement in the {lane} lane using the mood words above. The only numbers allowed anywhere are {tempo_lo} and {tempo_hi}. No lyrics, no verse, no chorus, no singer.
+  "tags": an array of 3 to 6 lowercase mood words for the library, each one or two words
+
+Hard requirements:
+  Stay inside the {lane} lane, and the prompt text must contain the exact word "{lane}" at least once.
+  Do not mention carriers, phones, disputes, or any company.
+  No dashes of any kind. Short sentences are fine.""".format(
+        rules=BINDING_RULES,
+        lane=payload.get("lane", ""),
+        energy=payload.get("energy", ""),
+        descriptors=", ".join(payload.get("descriptors", [])),
+        tempo_lo=payload.get("tempo_lo", ""),
+        tempo_hi=payload.get("tempo_hi", ""),
+    )
+
+
 BUILDERS = {
     "show_script": build_show_script,
     "summarize_record": build_summarize_record,
     "question_bank": build_question_bank,
     "taxonomy_candidates": build_taxonomy_candidates,
+    "mood_brief": build_mood_brief,
 }
