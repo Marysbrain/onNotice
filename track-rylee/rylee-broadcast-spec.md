@@ -229,3 +229,12 @@ Founder direction: all improvements layered on the music engine are platform pro
 2. The quality claim is scoped honestly: indistinguishable within the station's chosen lanes and forms, not at everything. Narrow domain plus proprietary preference data is the configuration where small systems converge on giants.
 3. Adapter training beyond what the mini can do arrives with a COST FLAG or founder hardware, never silently.
 4. Disclosure survives quality: the day the output fools every ear, the station still says what it is. Indistinguishable sound, distinguishable honesty.
+
+## Amendment 9, 2026-07-23: the sound doctrine and the station's memory
+
+Founder direction: the station's music is full-spectrum sound design, not band imitation. From the densest wall of sound to the most personal song delivered by a raindrop and a can. The human voice is a texture in the tapestry when used at all. The ambition is output that leads how AI music should be enjoyed, plus recognition of audience requests for previously played tracks.
+
+1. Lanes are chosen where generation is strongest: textural, cinematic, electronic, minimal, maximal. The polished lead-vocal pop lane stays closed until the open models earn it; no lane fakes what it cannot honestly do. Voice-as-texture is open from day one.
+2. The expectation staircase, recorded honestly: moving instrumental quality at launch; room-tuned signature sound as the taste engine accumulates; indistinguishable within lanes in the ownership era. Chart position is not the claim; defining the format is.
+3. Every track is named at birth and its ID renders on screen. The chat parser resolves requests by name, by ID, and by memory: descriptive requests referencing a mood or a night are matched against birth certificates and outcome records. The clock carries a request slot policy.
+4. The station remembers its nights. Replay of crowd-born archives, and requests answered from them, are core product, not archive dust. The purpose line for the whole amendment: a place where people feel life again.
