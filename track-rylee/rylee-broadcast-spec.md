@@ -156,3 +156,27 @@ The AAA file carries per-case claim, award, and fee columns that the platform do
 ### The founder's read, corrected
 
 Replaces amendment 3 item 5. The founder's commentary is written or approved by Michael and delivered by a dedicated third voice, distinct from both anchors and never a clone of Michael's voice. It is introduced on air as the founder's written commentary read aloud. His own voice is not required for any recurring segment. The voice-cloning ban and the facts-commentary split stand unchanged.
+
+## Amendment 5, 2026-07-23: Rylee Radio, the station wrapper
+
+Founder direction: the broadcast becomes a live-streamed music radio station in the GTA format-clock tradition. Music, DJ personality, variety segments, and commercial pods, with the receipts content carried as spots and breaks. This wraps the existing organs; it replaces none of them.
+
+### The doctrine
+
+1. The format clock is the product. A fixed repeating hour decides when content types run. Sentiment and chat decide only which item plays and what the DJ says.
+2. Two speeds. The slow loop is precomputed inventory rendered by the produced lane: music rotation, station IDs, evergreen patter, variety episodes, commercial pods. The fast loop is the only realtime path: short chat-reactive DJ inserts through the live lane, hard-deadlined, with evergreen filling any missed window. Dead air is structurally impossible.
+3. The ads are real. No fake commercials, ever. Spots are produced counterweights to carrier advertising, built from the decoder and the claims data, every claim cited on screen, favorable changes getting spots with equal rigor. Non-carrier spots are real content too or they do not run.
+4. Chat on air passes the moderation gate first, names read only as platform display names, never anything resembling personal information.
+5. All standing rules apply unchanged: brain-only facts, cite or refuse, disclosure, the walls, no em dashes.
+
+### The gate before build
+
+Music rights are the load-bearing decision: the library must be broadcastable and monetizable on YouTube without Content ID exposure. Options table (open-licensed catalogs versus paid AI generation with commercial terms versus license-vetted local generation) goes to the founder before any track enters inventory. COST FLAG on all paid paths.
+
+### New build items when the gate clears
+
+Clock scheduler (deterministic, walks the hour, respects rotation rules, always holds the next fifteen minutes), playout chain (single audio pipeline with crossfades into the stream, static visual plus now-playing readout for v1), chat ingest with the moderation gate, and inventory tooling on the bee. The desk show becomes the news desk segment inside the clock.
+
+### Hard prerequisite
+
+Wired network for the mini. A 24/7 upstream stream cannot ride a -82 dBm radio link.
