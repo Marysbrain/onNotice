@@ -8,8 +8,8 @@ import { carrierList, matchCarrier } from "../lib/taxonomy.js";
 import { checkWall } from "./walls.js";
 import { classifyIntent, buildFtsQuery, sourceCategory } from "./router.js";
 import { tagFor } from "./tags.js";
-import { claimTotalForCarrier } from "../publish/claims.js";
-import { dollarsFloorGrouped } from "./money.js";
+import { claimStatsForCarrier } from "../publish/claims.js";
+import { dollarsFloorGrouped, dollarsNearestTenGrouped } from "./money.js";
 import {
   type AskResponse,
   type Citation,
@@ -126,19 +126,28 @@ async function countIntent(env: Env, question: string): Promise<IntentResult> {
     `${reg} regulator or press ${plural(reg, "record", "records")}. ` +
     `Only corroborated or verified primary records are counted.`;
 
-  // Arbitration dollar sentence, OFF by default. Raw claim-column sums are
-  // dominated by absurd outlier asks (single filings claiming billions), so the
-  // faithful sum reads as inflation. It stays gated behind CONFIG ASK_CLAIMS=on
-  // until the robust-statistics pass (median, capped sums, outlier counts)
-  // ships and is reviewed. Real numbers only means real in impression, not
-  // just real in arithmetic.
+  // Arbitration dollar sentences, OFF by default (CONFIG ASK_CLAIMS=on). These
+  // now use only robust figures: a capped sum ($25,000 ceiling), an approximate
+  // median for the typical claim, and a count of the outlier asks that are
+  // reported but never summed. The raw column sum is never spoken; it is
+  // dominated by absurd outlier asks and reads as inflation (RULE 1: real in
+  // impression, not just in arithmetic). If the last sweep summed no capped claim
+  // for this carrier, the answer stays silent rather than printing zeros.
   const claimsFlag = await env.CONFIG.get("ASK_CLAIMS");
   if (claimsFlag === "on") {
-    const claim = await claimTotalForCarrier(env, carrier);
-    if (claim) {
+    const stats = await claimStatsForCarrier(env, carrier);
+    if (stats) {
+      // "$25,000" mirrors CLAIM_CAP_CENTS ($25,000). Combined total rounds down;
+      // the typical (median) figure is approximate, snapped to the nearest $10.
       answer +=
-        ` Consumers brought at least $${dollarsFloorGrouped(claim.cents)} in claims against ` +
-        `${disp} in these cases, per the AAA public file.`;
+        ` Among the ${stats.cappedRows} ${disp} ${plural(stats.cappedRows, "case", "cases")} with a parsed claim at or under $25,000, ` +
+        `consumers claimed a combined $${dollarsFloorGrouped(stats.cappedCents)}, ` +
+        `with a typical claim near $${dollarsNearestTenGrouped(stats.medianCents)}.`;
+      if (stats.aboveCap > 0) {
+        answer +=
+          ` ${stats.aboveCap} ${plural(stats.aboveCap, "filing", "filings")} claimed more than $25,000 and ` +
+          `${stats.aboveCap === 1 ? "is" : "are"} counted but not summed.`;
+      }
     }
   }
 

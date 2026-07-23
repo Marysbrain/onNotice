@@ -87,5 +87,18 @@ export function parseColumnCents(excerpt: string, keys: string[]): number | null
 // which is not guaranteed to group in the Workers runtime. Rounds DOWN.
 export function dollarsFloorGrouped(cents: number): string {
   const whole = Math.floor(cents / 100);
+  return groupThousands(whole);
+}
+
+// Dollars rounded to the NEAREST $10, thousands-grouped. Used only for the
+// approximate median in the /ask sentence: an approximate figure should not be
+// printed to the dollar, so we snap it to the nearest ten and label it "near".
+export function dollarsNearestTenGrouped(cents: number): string {
+  const tens = Math.round(cents / 1000) * 10; // cents/100 dollars, /10 then *10
+  return groupThousands(tens);
+}
+
+// Shared thousands grouper (no ICU dependency).
+function groupThousands(whole: number): string {
   return String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
