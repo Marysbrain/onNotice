@@ -1,0 +1,50 @@
+[
+ {
+  "speaker": "rylee",
+  "text": "Good evening. I am Rylee, and this is Carriers On Notice. I am an A I. Every claim you hear comes from the public record, and the receipt is on screen while I say it.",
+  "emotion": 0.45,
+  "pace": 1.0
+ },
+ {
+  "speaker": "co",
+  "text": "Let us start with the size of this. How many A T and T cases are actually in the library?",
+  "emotion": 0.55,
+  "pace": 1.05
+ },
+ {
+  "speaker": "rylee",
+  "text": "The vetted library holds two thousand four hundred sixty six records naming A T and T. All of them are consumer arbitration cases. Only corroborated or verified primary records are counted.",
+  "emotion": 0.35,
+  "pace": 0.95
+ },
+ {
+  "speaker": "co",
+  "text": "Two thousand. Four hundred. Sixty six. Each one a real person who went all the way to arbitration.",
+  "emotion": 0.7,
+  "pace": 0.85
+ },
+ {
+  "speaker": "rylee",
+  "text": "That is what the American Arbitration Association reports in its own public file.",
+  "emotion": 0.4,
+  "pace": 1.0
+ },
+ {
+  "speaker": "co",
+  "text": "And the question everyone asks. Are they getting better or worse?",
+  "emotion": 0.6,
+  "pace": 1.0
+ },
+ {
+  "speaker": "rylee",
+  "text": "Whether A T and T got better or worse is a judgment the library does not make. Here are the numbers. Seven hundred sixty three eligible records in twenty twenty one. Five hundred sixty one in twenty twenty three. Seventeen so far in twenty twenty five.",
+  "emotion": 0.3,
+  "pace": 0.9
+ },
+ {
+  "speaker": "co",
+  "text": "The numbers are on the screen with their sources. Check every one of them yourself, at carriers on notice dot com.",
+  "emotion": 0.65,
+  "pace": 0.95
+ }
+]
