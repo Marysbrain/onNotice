@@ -246,3 +246,12 @@ Founder direction: when the room demands a replay and floods with affirmation in
 1. The roar detector: consensus is behavioral, never a command, poll, or purchase. A replay reference plus an affirmation spike (message velocity, agreement phrasing, emoji density) crosses a threshold and the clock's request policy delivers. Thresholds scale with room size, anti-brigading heuristics apply, and the aggregate-never-profile rule governs all of it. The landscape check of 2026-07-23 is recorded: command-based chat music, vote apps, and request bots exist; behavioral consensus delivery does not. This is the moat.
 2. Every roar is outcome data: the taste engine treats a delivered encore as the strongest keep signal a track can earn.
 3. Native charts: most roared, most kept, the night's number one, computed from room behavior only. The weekly countdown of the room's own chart is a recurring variety segment: every entry written by the audience's moods, ranked by the audience's roars.
+
+## Amendment 11, 2026-07-23: the music is free
+
+Founder direction: every crowd-born track is available for free. No license. Download, iterate, inspire, and enjoy.
+
+1. Every published track carries a CC0 public domain dedication, the legal instrument for no rights reserved. Anyone may download, remix, redistribute, and use commercially, no permission, no attribution required.
+2. Diligence rides the existing machinery: each generation model's output terms are verified at the gate and archived in the track's birth certificate, so every freed track carries proof it was ours to free.
+3. The public archive page is a library: every track, its birth certificate, its chart history, and an unconditional download. The liveness, the roar, the memory, and the room remain the station's own product.
+4. The contrast is the brand: their fine print locks people in; ours says use as you see fit.
