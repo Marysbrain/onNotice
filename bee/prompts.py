@@ -81,12 +81,11 @@ def build_summarize_record(payload):
 
 {rules}
 
-RECORD {rid}:
+RECORD:
 {excerpt}
 
-OUTPUT contract. Return at most two plain sentences. Under 320 characters. No dashes. Every number you write must appear in the excerpt above. Return the sentences only, no label, no quotes.""".format(
+OUTPUT contract. Return at most two plain sentences. Under 320 characters. No dashes. Every number you write must appear in the excerpt above. Never mention any record id or reference number. Return the sentences only, no label, no quotes.""".format(
         rules=BINDING_RULES,
-        rid=payload.get("id", ""),
         excerpt=payload.get("excerpt", ""),
     )
 
