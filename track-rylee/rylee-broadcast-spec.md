@@ -204,3 +204,19 @@ Founder correction: music generation is LOCAL, from the mini, not the paid cloud
 1. Local-first generation using commercially clean open-weight models, license-verified at build. The current candidate class: Apache-licensed full-song models (ACE-Step, DiffRhythm, YuE) and the Stability community-licensed Stable Audio Open line for beds and stingers. Meta's MusicGen is barred: non-commercial weights. Every candidate's license is archived before its first track enters inventory.
 2. Honest constraint, recorded: 16GB of unified memory serves TTS, the local 8B, the bee, and playout. Music generation is scheduled around them by the mood engine, tracks land minutes to tens of minutes after the mood that seeded them, and the paid cloud tier remains only as a founder-approved quality escape hatch, COST FLAG intact.
 3. The failsafe overlay: a watchdog on the playout chain. If the stream upline drops, the encoder switches to the standing "we'll be right back" card locally and reconnects on a backoff loop; when the upline returns, the clock resumes where it should be, not where it stopped. The party restarts itself. Build item added to the amendment 5 list.
+
+## Amendment 7, 2026-07-23: the taste engine, the preference flywheel flipped
+
+Founder direction: consolidate live audience feedback per track, on the fly, and A/B test generation output against engagement over time. The flywheel the paid leaders built from millions of isolated ratings, rebuilt around one live room's contextual reaction.
+
+### The doctrine
+
+1. Every track's birth certificate gains an outcome record: aggregate chat sentiment during and after airing, message velocity, concurrent-viewer delta, replay requests. Track and room reaction are filed together.
+2. The clock scheduler doubles as the A/B laboratory: generation variants are assigned to slots deterministically and interleaved, so comparisons survive time-of-day effects. Results are scored per sentiment metric.
+3. The mood engine learns from the accumulated crowd-state, parameters, outcome table, with analysis run by the bee at zero token cost. Long term, preference data may fine-tune the open models in the station's lanes, closing the quality gap on our schedule with data we own.
+4. Aggregate, never profile. Optimization units are rooms and sessions, never individuals. Demographic context comes only from the platform's own anonymized channel analytics. No per-person preference records, ever. Deletion honoring extends to feedback inputs.
+5. Real numbers discipline applies to our own metrics: sample sizes ride with every finding, and insufficient signal is reported as insufficient, never rounded up to a conclusion.
+
+### Sequencing
+
+The flywheel learns only from a live station, but the outcome schema ships with the clock scheduler build so no early stream's data is lost. Schema first, learning later.
