@@ -84,8 +84,11 @@ fi
 # shellcheck disable=SC1091
 source "${VENV}/bin/activate"
 
-log "upgrading pip, setuptools, wheel (small, direct download)"
-python -m pip install --quiet --upgrade pip setuptools wheel
+log "upgrading pip and wheel; setuptools pinned below 81 (small, direct download)"
+# resemble-perth 1.0.1 (chatterbox's watermarker) imports pkg_resources, which
+# setuptools 81 removed. Without the pin, perth.PerthImplicitWatermarker is
+# None and model construction dies with TypeError: NoneType not callable.
+python -m pip install --quiet --upgrade pip wheel "setuptools<81"
 
 # ---------------------------------------------------------------------------
 # 3. Resolve the dependency set without downloading the big wheels.
@@ -128,13 +131,15 @@ for item in rep.get("install", []):
 PY
 )
 
+# Zero artifacts is normal on a rerun: pip reports nothing to install when
+# the venv is already satisfied. The loop below is guarded because bash 3.2
+# with set -u cannot expand an empty array.
 if (( ${#URLS[@]} == 0 )); then
-  log "ERROR: dependency report yielded no artifact URLs. See ${REPORT}."
-  exit 1
+  log "dependency set already satisfied; nothing to fetch."
 fi
 
 log "resolved ${#URLS[@]} artifacts. Populating wheelhouse ..."
-for url in "${URLS[@]}"; do
+for url in ${URLS[@]+"${URLS[@]}"}; do
   fname="${url##*/}"
   fname="${fname%%\?*}"
   dest="${WHEELHOUSE}/${fname}"
@@ -206,9 +211,24 @@ import sys, time
 from pathlib import Path
 models = Path(sys.argv[1]); out = Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 
+import wave
+
 import torch
-import torchaudio
 from chatterbox.tts import ChatterboxTTS
+
+
+def save_wav(path, wav_tensor, sr):
+    # torchaudio.save needs torchcodec on torch 2.13; the stdlib writer needs
+    # nothing and this is mono 16 bit, which is all the smoke test proves.
+    data = wav_tensor.detach().cpu().numpy()
+    if data.ndim == 2:
+        data = data[0]
+    data = (data.clip(-1.0, 1.0) * 32767.0).astype("<i2")
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(int(sr))
+        w.writeframes(data.tobytes())
 
 if torch.backends.mps.is_available():
     device = "mps"
@@ -227,7 +247,7 @@ wav = model.generate("The receipts are on screen.")
 print(f"[smoke] synthesized in {time.perf_counter()-t1:.1f}s")
 
 path = out / "smoke.wav"
-torchaudio.save(str(path), wav.detach().cpu(), model.sr)
+save_wav(path, wav, model.sr)
 print(f"[smoke] wrote {path}")
 PY
 

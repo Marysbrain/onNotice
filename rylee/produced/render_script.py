@@ -184,10 +184,25 @@ def _pick_device(requested: Optional[str]):
     return "cpu"
 
 
+def _save_wav(path: Path, wav_tensor, sr: int) -> None:
+    """Mono 16 bit wav via the stdlib. torchaudio.save requires torchcodec on
+    torch 2.13; this needs nothing and the mastering chain re-encodes anyway."""
+    import wave
+
+    data = wav_tensor.detach().cpu().numpy()
+    if data.ndim == 2:
+        data = data[0]
+    data = (data.clip(-1.0, 1.0) * 32767.0).astype("<i2")
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(int(sr))
+        w.writeframes(data.tobytes())
+
+
 def render(script: list[dict], cfg: RenderConfig) -> dict:
     """Render a validated script to wav and mp3. Returns a metrics dict."""
     import torch
-    import torchaudio
     from chatterbox.tts import ChatterboxTTS
 
     refs = {"rylee": cfg.ref_rylee, "co": cfg.ref_co}
@@ -248,7 +263,7 @@ def render(script: list[dict], cfg: RenderConfig) -> dict:
     total_render = time.perf_counter() - total0
     raw = torch.cat(pieces, dim=1)
     raw_path = cfg.out_dir / f"{cfg.out_name}.raw.wav"
-    torchaudio.save(str(raw_path), raw, sr)
+    _save_wav(raw_path, raw, sr)
 
     wav_path = cfg.out_dir / f"{cfg.out_name}.wav"
     mp3_path = cfg.out_dir / f"{cfg.out_name}.mp3"
