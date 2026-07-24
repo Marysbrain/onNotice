@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Launch agent for the worker bee watch loop.
+  The placeholders below are filled in by install_bee_service.sh at install
+  time, so no one ever edits this file by hand. Unique label com.con.bee, so
+  it does not collide with anything else on the box.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.con.bee</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PYTHON__</string>
+        <string>__BEEPY__</string>
+        <string>watch</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__WORKDIR__</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__LOGDIR__/launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__LOGDIR__/launchd.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

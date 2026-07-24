@@ -15,6 +15,7 @@ import threading
 import time
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib import request as urlrequest
 
 import bee
 
@@ -75,7 +76,8 @@ class ShowScriptTests(unittest.TestCase):
 
     def test_rejects_em_dash(self):
         s = good_script()
-        s[3]["text"] = "What does that mean — really — for a family?"
+        em = chr(0x2014)
+        s[3]["text"] = "What does that mean " + em + " really " + em + " for a family?"
         ok, reasons = bee.validate_show_script(self.payload, s)
         self.assertFalse(ok)
         self.assertTrue(any("em or en dash" in r for r in reasons))
@@ -135,7 +137,7 @@ class SummarizeTests(unittest.TestCase):
         self.assertTrue(any("not in the excerpt" in r for r in reasons))
 
     def test_rejects_em_dash(self):
-        ok, reasons = bee.validate_summarize_record(self.payload, "AT&T listed cases — many of them.")
+        ok, reasons = bee.validate_summarize_record(self.payload, "AT&T listed cases " + chr(0x2014) + " many of them.")
         self.assertFalse(ok)
 
     def test_rejects_too_long(self):
@@ -219,16 +221,26 @@ class TaxonomyTests(unittest.TestCase):
 
 class StubHandler(BaseHTTPRequestHandler):
     canned = ""
+    tags = [{"name": "gpt-oss:120b-cloud"}, {"name": "llama3:latest"}]
 
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        self.rfile.read(length)
-        payload = json.dumps({"response": StubHandler.canned, "done": True}).encode("utf-8")
+    def _write(self, obj):
+        payload = json.dumps(obj).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        self.rfile.read(length)
+        self._write({"response": StubHandler.canned, "done": True})
+
+    def do_GET(self):
+        if self.path.startswith("/api/tags"):
+            self._write({"models": StubHandler.tags})
+        else:
+            self._write({"ok": True})
 
     def log_message(self, *args):
         pass
@@ -392,6 +404,210 @@ class MoodBriefTests(unittest.TestCase):
     def test_input_validator_accepts_engine_payload(self):
         errs = bee.validate_input_mood_brief(self.payload())
         self.assertEqual(errs, [])
+
+
+# ---------------------------------------------------------------------------
+# A stub Ollama plus a temp BEE_HOME, shared by the new feature tests.
+# ---------------------------------------------------------------------------
+
+
+class StubServerMixin:
+    def start_stub(self):
+        self.tmp = tempfile.mkdtemp(prefix="beehome-")
+        os.environ["BEE_HOME"] = self.tmp
+        self.server = HTTPServer(("127.0.0.1", 0), StubHandler)
+        port = self.server.server_address[1]
+        os.environ["BEE_OLLAMA_URL"] = "http://127.0.0.1:{0}".format(port)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def stop_stub(self):
+        self.server.shutdown()
+        self.server.server_close()
+        os.environ.pop("BEE_HOME", None)
+        os.environ.pop("BEE_OLLAMA_URL", None)
+
+
+class DraftValidatorTests(unittest.TestCase):
+    def test_parse_strips_em_dash(self):
+        em = chr(0x2014)
+        shaped, err = bee.parse_draft("one " + em + " two " + em + " three")
+        self.assertIsNone(err)
+        self.assertFalse(bee.has_em_dash(shaped))
+        self.assertIn("one", shaped)
+        self.assertIn("three", shaped)
+
+    def test_parse_caps_size(self):
+        shaped, _ = bee.parse_draft("x" * (bee.DRAFT_MAX_CHARS + 500))
+        self.assertEqual(len(shaped), bee.DRAFT_MAX_CHARS)
+
+    def test_validate_rejects_empty(self):
+        ok, reasons = bee.validate_draft({}, "   ")
+        self.assertFalse(ok)
+
+    def test_validate_accepts_plain_text(self):
+        ok, reasons = bee.validate_draft({}, "a private thought, written down.")
+        self.assertTrue(ok, reasons)
+
+    def test_input_validator_requires_prompt(self):
+        self.assertTrue(bee.validate_input_draft({}))
+        self.assertEqual(bee.validate_input_draft({"prompt": "think out loud"}), [])
+
+
+class DraftEndToEndTests(StubServerMixin, unittest.TestCase):
+    def setUp(self):
+        self.start_stub()
+
+    def tearDown(self):
+        self.stop_stub()
+
+    def test_draft_echoes_model_and_strips_dashes(self):
+        em = chr(0x2014)
+        StubHandler.canned = "A first line " + em + " and more thinking."
+        job_input = {"model": "gpt-oss:120b-cloud", "prompt": "help me think"}
+        inp = os.path.join(self.tmp, "draft.json")
+        with open(inp, "w", encoding="utf-8") as fh:
+            json.dump(job_input, fh)
+
+        self.assertEqual(bee.cmd_submit("draft", inp), 0)
+        bee.cmd_run_once()
+
+        outs = list(bee.bee_dir("out").glob("*.json"))
+        self.assertEqual(len(outs), 1)
+        with open(outs[0], "r", encoding="utf-8") as fh:
+            result = json.load(fh)
+        self.assertEqual(result["model_used"], "gpt-oss:120b-cloud")
+        self.assertIn("elapsed", result)
+        self.assertFalse(bee.has_em_dash(result["output"]))
+        self.assertIn("first line", result["output"])
+
+    def test_draft_size_cap_enforced_end_to_end(self):
+        StubHandler.canned = "y" * (bee.DRAFT_MAX_CHARS + 1000)
+        job_input = {"prompt": "long one"}
+        inp = os.path.join(self.tmp, "long.json")
+        with open(inp, "w", encoding="utf-8") as fh:
+            json.dump(job_input, fh)
+        bee.cmd_submit("draft", inp)
+        bee.cmd_run_once()
+        outs = list(bee.bee_dir("out").glob("*.json"))
+        self.assertEqual(len(outs), 1)
+        with open(outs[0], "r", encoding="utf-8") as fh:
+            result = json.load(fh)
+        self.assertLessEqual(len(result["output"]), bee.DRAFT_MAX_CHARS)
+
+
+class WatchIterationTests(StubServerMixin, unittest.TestCase):
+    def setUp(self):
+        self.start_stub()
+
+    def tearDown(self):
+        self.stop_stub()
+
+    def _submit_draft(self):
+        inp = os.path.join(self.tmp, "w.json")
+        with open(inp, "w", encoding="utf-8") as fh:
+            json.dump({"prompt": "one small thought"}, fh)
+        bee.cmd_submit("draft", inp)
+
+    def test_single_iteration_accepts(self):
+        StubHandler.canned = "a clean draft with no banned marks."
+        self._submit_draft()
+        counts = bee.run_once_iteration()
+        self.assertEqual(counts["processed"], 1)
+        self.assertEqual(counts["accepted"], 1)
+        self.assertEqual(len(list(bee.bee_dir("out").glob("*.json"))), 1)
+
+    def test_iteration_survives_a_crashing_job(self):
+        # Force the processor to blow up. The iteration must not raise; the job
+        # must land in failed/ with the traceback, and the loop stays alive.
+        StubHandler.canned = "whatever"
+        self._submit_draft()
+        original = bee._process_job
+
+        def boom(job):
+            raise RuntimeError("simulated processing crash")
+
+        bee._process_job = boom
+        try:
+            counts = bee.run_once_iteration()  # must not raise
+        finally:
+            bee._process_job = original
+
+        self.assertEqual(counts["crashed"], 1)
+        self.assertEqual(len(list(bee.bee_dir("out").glob("*.json"))), 0)
+        failed = list(bee.bee_dir("failed").glob("*.json"))
+        self.assertEqual(len(failed), 1)
+        with open(failed[0], "r", encoding="utf-8") as fh:
+            job = json.load(fh)
+        joined = " ".join(job.get("failure_reasons", []))
+        self.assertIn("crash", joined.lower())
+        self.assertEqual(len(list(bee.bee_dir("working").glob("*.json"))), 0)
+
+
+class DoctorTests(StubServerMixin, unittest.TestCase):
+    def setUp(self):
+        self.start_stub()
+
+    def tearDown(self):
+        self.stop_stub()
+
+    def test_doctor_passes_when_ollama_up(self):
+        StubHandler.tags = [{"name": "gpt-oss:120b-cloud"}, {"name": "llama3:latest"}]
+        self.assertEqual(bee.cmd_doctor(), 0)
+
+    def test_model_names_lists_cloud_first(self):
+        StubHandler.tags = [{"name": "llama3:latest"}, {"name": "gpt-oss:120b-cloud"}]
+        names = bee.model_names()
+        self.assertEqual(names[0], "gpt-oss:120b-cloud")
+
+    def test_doctor_fails_when_ollama_down(self):
+        # Point at a closed port so the tags call cannot connect.
+        os.environ["BEE_OLLAMA_URL"] = "http://127.0.0.1:1"
+        self.assertNotEqual(bee.cmd_doctor(), 0)
+
+
+class WebSmokeTests(StubServerMixin, unittest.TestCase):
+    def setUp(self):
+        self.start_stub()
+        self.web = bee.make_web_server("127.0.0.1", 0)
+        self.web_port = self.web.server_address[1]
+        self.web_thread = threading.Thread(target=self.web.serve_forever, daemon=True)
+        self.web_thread.start()
+
+    def tearDown(self):
+        self.web.shutdown()
+        self.web.server_close()
+        self.stop_stub()
+
+    def _post(self, path, obj):
+        data = json.dumps(obj).encode("utf-8")
+        url = "http://127.0.0.1:{0}{1}".format(self.web_port, path)
+        req = urlrequest.Request(url, data=data, headers={"Content-Type": "application/json"})
+        with urlrequest.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    def _get(self, path):
+        url = "http://127.0.0.1:{0}{1}".format(self.web_port, path)
+        with urlrequest.urlopen(url, timeout=5) as resp:
+            return resp.read().decode("utf-8")
+
+    def test_page_serves(self):
+        html = self._get("/")
+        self.assertIn("The bee", html)
+        self.assertIn("<textarea", html)
+
+    def test_post_draft_creates_job_file(self):
+        before = len(list(bee.bee_dir("jobs").glob("*.json")))
+        result = self._post("/api/submit", {"type": "draft", "model": "llama3:latest", "prompt": "a spoken thought"})
+        self.assertTrue(result["ok"], result)
+        self.assertIsNotNone(result["job_id"])
+        after = len(list(bee.bee_dir("jobs").glob("*.json")))
+        self.assertEqual(after, before + 1)
+
+    def test_post_bad_structured_json_is_reported(self):
+        result = self._post("/api/submit", {"type": "summarize_record", "prompt": "not json"})
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("JSON" in e for e in result["errors"]))
 
 
 if __name__ == "__main__":

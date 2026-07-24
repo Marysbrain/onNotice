@@ -152,10 +152,21 @@ Hard requirements:
     )
 
 
+def build_draft(payload):
+    """Freeform drafting. The founder's own thinking tool.
+
+    No binding rules are injected and no facts are policed. The prompt is
+    passed to the model as written. The only shaping happens after the model
+    speaks: the output is capped and any em dash characters are stripped.
+    """
+    return payload.get("prompt", "")
+
+
 BUILDERS = {
     "show_script": build_show_script,
     "summarize_record": build_summarize_record,
     "question_bank": build_question_bank,
     "taxonomy_candidates": build_taxonomy_candidates,
     "mood_brief": build_mood_brief,
+    "draft": build_draft,
 }

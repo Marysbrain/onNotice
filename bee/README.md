@@ -9,6 +9,53 @@ Discipline here is enforced by code, not by trust. Every job runs through a
 deterministic validator after the model speaks. A model that breaks a rule does
 not get published. It gets moved to `failed/` with the reasons written down.
 
+## Start it once, then just use the web page
+
+You do not need a terminal for daily work. You set it up one time, then you work
+in a web page.
+
+1. Open the Terminal app on the Mac mini. Type this one line and press return:
+
+   ```
+   bash install_bee_service.sh
+   ```
+
+   That teaches the mini to run the bee in the background, keep it running, and
+   start it again after a restart. You only do this once. It never asks for a
+   password.
+
+2. On any device on your home wifi, open a web browser and go to the mini's
+   address on port 8899. It looks like this:
+
+   ```
+   http://192.168.1.x:8899
+   ```
+
+   Replace `192.168.1.x` with the mini's actual address. If you do not know it,
+   on the mini open System Settings, then Network, and read the address there.
+   It usually starts with `192.168.1`.
+
+3. The page has one big box. Type or talk into it, pick a model at the top, and
+   press the big Submit button. Your drafts show up in the feed below within a
+   few seconds. Nothing is ever published. Everything stays on the mini for you
+   to read.
+
+To turn the background service off later: `bash install_bee_service.sh uninstall`.
+
+### The web page, in plain words
+
+- One big box for your words. Talk-to-text works fine here.
+- A model menu at the top. Cloud models are listed first. Pick one or leave the
+  default.
+- A job type menu that starts on Draft. Draft is your everyday thinking tool.
+- A big Submit button.
+- A results feed that refreshes on its own every few seconds. Accepted drafts
+  show their text. Rejected jobs show the reason in plain words.
+
+If you want one of the structured job types instead of Draft, pick it in the
+menu and paste its JSON into the box. For everyday writing, leave it on Draft
+and just type.
+
 ## What it needs
 
 Python 3.9 or newer. Standard library only. No pip, no installs, ever. An
@@ -34,6 +81,16 @@ Everything is under `~/bee/`:
 Override the home with `BEE_HOME` and the Ollama endpoint with `BEE_OLLAMA_URL`.
 The tests use both. In production leave them unset.
 
+## A note on the web page and your network
+
+The web page has no login in this version. Anyone who can reach the mini on your
+network can open it. That is fine on a trusted home network and nowhere else. Do
+not forward port 8899 through your router, and do not open it to the internet.
+
+By default the page binds to `0.0.0.0`, which means every device on your home
+wifi can reach it. To lock it to the mini itself, set `BEE_BIND=127.0.0.1`
+before starting. The port is 8899.
+
 ## Run order on the mini
 
 1. Confirm Ollama is up: `curl -s http://127.0.0.1:11434/api/tags` returns JSON.
@@ -52,8 +109,24 @@ launchd job on the mini. The bee itself starts no timers and opens no ports.
 ```
 python3 bee.py submit <type> <input.json>
 python3 bee.py run-once
+python3 bee.py watch
+python3 bee.py doctor
+python3 bee.py web
 python3 bee.py status
 ```
+
+`run-once` drains the inbox one time and exits. `watch` drains in a loop every
+three seconds and stays running. It writes a heartbeat to the log every five
+minutes, and one bad job never stops the loop: a job that crashes lands in
+`failed/` with its traceback and the loop keeps going. Stop it with Ctrl-C. The
+background service installed by `install_bee_service.sh` runs `watch` for you.
+
+`doctor` is the health check. It confirms Ollama is reachable, lists the models
+it serves, reports how many jobs are waiting or done, and reports how much disk
+the bee is using. It exits with an error code if something is wrong, so a person
+or the system can notice.
+
+`web` serves the single page interface on port 8899. See the start section above.
 
 `submit` reads a JSON object. An optional top level `"model"` key names the
 model to try first. Everything else is the job payload for that type. If the
@@ -63,6 +136,24 @@ the requested model first, then falls back to `llama3:latest`. Cloud models
 120 seconds. Each job gets at most two generation attempts before it fails.
 
 ## The job types
+
+### draft
+
+Your everyday freeform writing and thinking tool. Input is simple:
+
+```json
+{
+  "model": "gpt-oss:120b-cloud",
+  "prompt": "Talk through how to explain arbitration to a first time listener."
+}
+```
+
+`model` is optional. Output is whatever the model writes back, with two rules
+applied by the machine and nothing else: the text is capped at 20,000
+characters, and any em dash characters are quietly removed rather than the whole
+thing being rejected. This is a private drafting tool, so it does not police
+facts or wording. The saved file records which model answered and how many
+seconds it took.
 
 ### show_script
 
